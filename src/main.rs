@@ -2,13 +2,9 @@ use crate::bot_interface::{bot_handler, BotCommand, State};
 pub use crate::error::Result;
 use dotenvy::dotenv;
 use log::info;
-use std::error::Error;
 use teloxide::dispatching::dialogue::InMemStorage;
 use teloxide::dptree::deps;
 use teloxide::{prelude::*, utils::command::BotCommands};
-
-type MyDialogue = Dialogue<State, InMemStorage<State>>;
-type HandlerResult = std::result::Result<(), Box<dyn Error + Send + Sync>>;
 
 mod config;
 mod error;
@@ -16,10 +12,6 @@ mod model;
 mod adapters;
 mod worker;
 mod bot_interface;
-
-
-
-
 
 #[tokio::main]
 async fn main() -> Result<()> {

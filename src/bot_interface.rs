@@ -1,14 +1,17 @@
 use crate::config::config;
 use crate::model::deal::{get_house_numbers, get_object_numbers, prepare_response};
 use crate::model::sync::sync;
-use crate::{HandlerResult, MyDialogue};
 use log::info;
+use std::error::Error;
 use teloxide::dispatching::dialogue::InMemStorage;
 use teloxide::dispatching::{dialogue, DpHandlerDescription};
 use teloxide::dptree::case;
 use teloxide::macros::BotCommands;
 use teloxide::prelude::*;
 use teloxide::types::{KeyboardButton, KeyboardMarkup, KeyboardRemove, ReplyMarkup};
+
+type HandlerResult = std::result::Result<(), Box<dyn Error + Send + Sync>>;
+type MyDialogue = Dialogue<State, InMemStorage<State>>;
 
 const PROJECTS: [&str; 2] = ["DNS Сити", "ЖК Формат"];
 const OBJECT_TYPES: [&str; 2] = ["Квартиры", "Кладовки"];
