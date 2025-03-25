@@ -1,24 +1,23 @@
 use crate::adapters::amo::AmoClient;
-use crate::config::config;
 use crate::model::Db;
 use crate::Result;
 use log::{error, info};
 
 use crate::adapters::amo::city_impl::AmoCityClient;
 use crate::adapters::amo::format_impl::AmoFormatClient;
-use crate::adapters::profit::{DealForAdd, ProfitbaseClient};
+use crate::adapters::profit::DealForAdd;
 use std::sync::Arc;
 
 pub async fn sync() -> Vec<Result<Vec<DealForAdd>>> {
     let mut results: Vec<Result<Vec<DealForAdd>>> = vec![];
     let amo_city = AmoCityClient::new();
-    results.extend(sync_project(true, amo_city).await);
+    results.extend(sync_project(amo_city).await);
     let amo_format = AmoFormatClient::new();
-    results.extend(sync_project(false, amo_format).await);
+    results.extend(sync_project(amo_format).await);
     results
 }
 
-async fn sync_project<A>(is_city: bool, amo: A) -> Vec<Result<Vec<DealForAdd>>>
+async fn sync_project<A>(amo: A) -> Vec<Result<Vec<DealForAdd>>>
 where
     A: AmoClient + Send + Sync + 'static,
 {
@@ -32,7 +31,7 @@ where
                 .collect::<Vec<_>>();
             let mut res = vec![];
             for funnel in filtered {
-                res.push(sync_funnel(is_city, amo.clone(), funnel.id).await)
+                res.push(sync_funnel(amo.clone(), funnel.id).await)
             }
             res
         }
@@ -43,11 +42,7 @@ where
     }
 }
 
-async fn sync_funnel<A>(
-    is_city: bool,
-    amo_client: Arc<A>,
-    funnel_id: i64,
-) -> Result<Vec<DealForAdd>>
+async fn sync_funnel<A>(amo_client: Arc<A>, funnel_id: i64) -> Result<Vec<DealForAdd>>
 where
     A: AmoClient + Send + Sync + 'static,
 {
@@ -61,17 +56,16 @@ where
     if !leads.is_empty() {
         let db = Db::new().await;
         let saved_ids = db.read_deal_ids().await?;
-        let profit_client = if is_city {
-            ProfitbaseClient::new(&config().PROF_CITY_ACCOUNT, &config().PROF_CITY_API_KEY)
-        } else {
-            ProfitbaseClient::new(&config().PROF_FORMAT_ACCOUNT, &config().PROF_FORMAT_API_KEY)
-        };
-        let token = profit_client.get_profit_token().await?;
+
+        let token = amo_client.profitbase_client().get_profit_token().await?;
         for lead in leads {
             if saved_ids.contains(&lead) {
                 continue;
             }
-            let profit_data = profit_client.get_profit_data(lead, &token).await?;
+            let profit_data = amo_client
+                .profitbase_client()
+                .get_profit_data(lead, &token)
+                .await?;
             db.create_deal(&profit_data).await?;
             new_data.push(profit_data);
         }

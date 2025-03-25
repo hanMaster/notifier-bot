@@ -10,10 +10,10 @@ use teloxide::macros::BotCommands;
 use teloxide::prelude::*;
 use teloxide::types::{KeyboardButton, KeyboardMarkup, KeyboardRemove, ReplyMarkup};
 
-type HandlerResult = std::result::Result<(), Box<dyn Error + Send + Sync>>;
+type HandlerResult = Result<(), Box<dyn Error + Send + Sync>>;
 type MyDialogue = Dialogue<State, InMemStorage<State>>;
 
-const PROJECTS: [&str; 2] = ["DNS Сити", "ЖК Формат"];
+pub const PROJECTS: [&str; 2] = ["DNS Сити", "ЖК Формат"];
 const OBJECT_TYPES: [&str; 2] = ["Квартиры", "Кладовки"];
 #[derive(Clone, Default)]
 pub enum State {
@@ -160,22 +160,15 @@ async fn receive_project_name(bot: Bot, dialogue: MyDialogue, msg: Message) -> H
     match msg.text() {
         Some(text) => {
             if PROJECTS.contains(&text) {
-                if text.eq("ЖК Формат") {
-                    bot.send_message(msg.chat.id, "Нет данных")
-                        .reply_markup(ReplyMarkup::KeyboardRemove(KeyboardRemove::new()))
-                        .await?;
-                    dialogue.exit().await?;
-                } else {
-                    let keyboard = make_kbd(2);
-                    bot.send_message(msg.chat.id, "Квартиры или кладовки?")
-                        .reply_markup(keyboard)
-                        .await?;
-                    dialogue
-                        .update(State::ChooseObjectType {
-                            project: text.into(),
-                        })
-                        .await?;
-                }
+                let keyboard = make_kbd(2);
+                bot.send_message(msg.chat.id, "Квартиры или кладовки?")
+                    .reply_markup(keyboard)
+                    .await?;
+                dialogue
+                    .update(State::ChooseObjectType {
+                        project: text.into(),
+                    })
+                    .await?;
             } else {
                 bot.send_message(msg.chat.id, "Сделайте выбор кнопками")
                     .await?;
