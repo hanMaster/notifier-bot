@@ -4,37 +4,26 @@ use crate::model::Db;
 use crate::Result;
 use log::{error, info};
 
-use std::sync::Arc;
+use crate::adapters::amo::city_impl::AmoCityClient;
+use crate::adapters::amo::format_impl::AmoFormatClient;
 use crate::adapters::profit::{DealForAdd, ProfitbaseClient};
-
-const CITY_PIPELINE: i64 = 7486918;
-const FORMAT_PIPELINE: i64 = 1983685;
+use std::sync::Arc;
 
 pub async fn sync() -> Vec<Result<Vec<DealForAdd>>> {
-    let mut results: Vec<Result<Vec<DealForAdd>>> = Vec::with_capacity(2);
-    results.extend(sync_project(true).await); // city
-    results.extend(sync_project(false).await); // format
+    let mut results: Vec<Result<Vec<DealForAdd>>> = vec![];
+    let amo_city = AmoCityClient::new();
+    results.extend(sync_project(true, amo_city).await);
+    let amo_format = AmoFormatClient::new();
+    results.extend(sync_project(false, amo_format).await);
     results
 }
 
-async fn sync_project(is_city: bool) -> Vec<Result<Vec<DealForAdd>>> {
-    let amo = if is_city {
-        Arc::new(AmoClient::new(
-            &config().AMO_CITY_ACCOUNT,
-            &config().AMO_CITY_TOKEN,
-        ))
-    } else {
-        Arc::new(AmoClient::new(
-            &config().AMO_FORMAT_ACCOUNT,
-            &config().AMO_FORMAT_TOKEN,
-        ))
-    };
-    let pipeline = if is_city {
-        CITY_PIPELINE
-    } else {
-        FORMAT_PIPELINE
-    };
-    let funnels_res = amo.get_funnels(pipeline).await;
+async fn sync_project<A>(is_city: bool, amo: A) -> Vec<Result<Vec<DealForAdd>>>
+where
+    A: AmoClient + Send + Sync + 'static,
+{
+    let amo = Arc::new(amo);
+    let funnels_res = amo.get_funnels().await;
     match funnels_res {
         Ok(funnels) => {
             let filtered = funnels
@@ -54,22 +43,16 @@ async fn sync_project(is_city: bool) -> Vec<Result<Vec<DealForAdd>>> {
     }
 }
 
-async fn sync_funnel(
+async fn sync_funnel<A>(
     is_city: bool,
-    amo_client: Arc<AmoClient>,
+    amo_client: Arc<A>,
     funnel_id: i64,
-) -> Result<Vec<DealForAdd>> {
-    info!(
-        "Syncing {} funnel {}",
-        if is_city { "city" } else { "format" },
-        funnel_id
-    );
-    let pipeline = if is_city {
-        CITY_PIPELINE
-    } else {
-        FORMAT_PIPELINE
-    };
-    let leads = amo_client.get_funnel_leads(pipeline, funnel_id).await?;
+) -> Result<Vec<DealForAdd>>
+where
+    A: AmoClient + Send + Sync + 'static,
+{
+    info!("Syncing {} funnel {}", amo_client.project(), funnel_id);
+    let leads = amo_client.get_funnel_leads(funnel_id).await?;
 
     info!("leads: {:?}", leads);
 
