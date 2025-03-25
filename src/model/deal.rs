@@ -81,8 +81,9 @@ impl Db {
         Ok(())
     }
 
-    pub async fn read_deal_ids(&self) -> Result<Vec<u64>> {
-        let records: Vec<HouseData> = sqlx::query_as("SELECT * FROM deal")
+    pub async fn read_deal_ids_by_project(&self, project: &str) -> Result<Vec<u64>> {
+        let records: Vec<HouseData> = sqlx::query_as("SELECT * FROM deal WHERE project = $1")
+            .bind(project)
             .fetch_all(&self.db)
             .await?;
         let res = records.iter().map(|r| r.deal_id).collect();

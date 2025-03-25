@@ -13,7 +13,17 @@ pub struct Db {
 
 impl Db {
     pub async fn new() -> Db {
-        init_db().await.unwrap()
+        let db_result = SqlitePoolOptions::new()
+            .max_connections(5)
+            .connect(&config().DB_URL)
+            .await;
+
+        match db_result {
+            Ok(db) => Self { db },
+            Err(e) => {
+                panic!("Create db pool failed: {e}")
+            }
+        }
     }
 }
 
@@ -38,7 +48,7 @@ async fn create_schema(db_url: &str) -> Result<()> {
     Ok(())
 }
 
-pub async fn init_db() -> Result<Db> {
+pub async fn init_db() -> Result<()> {
     if !Sqlite::database_exists(&config().DB_URL)
         .await
         .unwrap_or(false)
@@ -49,10 +59,5 @@ pub async fn init_db() -> Result<Db> {
             Err(e) => panic!("{}", e),
         }
     }
-    let db = SqlitePoolOptions::new()
-        .max_connections(5)
-        .connect(&config().DB_URL)
-        .await?;
-
-    Ok(Db { db })
+    Ok(())
 }

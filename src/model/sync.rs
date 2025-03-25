@@ -55,7 +55,9 @@ where
 
     if !leads.is_empty() {
         let db = Db::new().await;
-        let saved_ids = db.read_deal_ids().await?;
+        let saved_ids = db.read_deal_ids_by_project(amo_client.project()).await?;
+
+        info!("saved ids for {}: {:?}", amo_client.project(), saved_ids);
 
         let token = amo_client.profitbase_client().get_profit_token().await?;
         for lead in leads {

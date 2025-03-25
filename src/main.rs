@@ -5,6 +5,7 @@ use log::info;
 use teloxide::dispatching::dialogue::InMemStorage;
 use teloxide::dptree::deps;
 use teloxide::{prelude::*, utils::command::BotCommands};
+use crate::model::init_db;
 
 mod config;
 mod error;
@@ -18,6 +19,9 @@ async fn main() -> Result<()> {
     dotenv().expect("dotenv init failed");
 
     pretty_env_logger::init();
+
+    init_db().await?;
+
     info!("Starting DKP bot...");
 
     let bot = Bot::from_env();
