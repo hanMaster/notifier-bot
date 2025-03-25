@@ -95,7 +95,9 @@ impl Db {
     pub async fn mark_as_transferred(&self, project: &str, ids: &Vec<u64>) -> Result<()> {
         info!("mark as transferred project: {}, ids: {:?}", project, ids);
         for id in ids {
-            let res = sqlx::query("UPDATE deal SET transfer_completed = true WHERE project = $1 AND deal.deal_id = $2")
+            let res = sqlx::query(r#"
+                UPDATE deal SET transfer_completed = true
+                            WHERE project = $1 AND deal.deal_id = $2"#)
                 .bind(project)
                 .bind(*id as i64)
                 .execute(&self.db)
