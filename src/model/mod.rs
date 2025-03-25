@@ -32,15 +32,17 @@ async fn create_schema(db_url: &str) -> Result<()> {
     let qry = r#"
     CREATE TABLE IF NOT EXISTS deal
     (
-        id              INTEGER PRIMARY KEY AUTOINCREMENT,
-        deal_id         BIGINTEGER          NOT NULL,
-        project         TEXT                NOT NULL,
-        house           INTEGER             NOT NULL,
-        object_type     TEXT                NOT NULL,
-        object          INTEGER             NOT NULL,
-        facing          TEXT,
-        created_on      DATETIME DEFAULT    (datetime('now', 'localtime')),
-        updated_on      DATETIME DEFAULT    (datetime('now', 'localtime'))
+        id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+        deal_id             BIGINTEGER          NOT NULL,
+        project             TEXT                NOT NULL,
+        house               INTEGER             NOT NULL,
+        object_type         TEXT                NOT NULL,
+        object              INTEGER             NOT NULL,
+        facing              TEXT,
+        days_limit          INTEGER  DEFAULT    30,
+        transfer_completed  BOOLEAN DEFAULT FALSE,
+        created_on          DATETIME DEFAULT    (datetime('now', 'localtime')),
+        updated_on          DATETIME DEFAULT    (datetime('now', 'localtime'))
     );
     "#;
     let _ = sqlx::query(qry).execute(&pool).await?;

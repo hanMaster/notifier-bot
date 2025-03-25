@@ -32,7 +32,12 @@ pub struct ObjectNumbers {
 impl Db {
     pub async fn list_house_numbers(&self, project: &str, object_type: &str) -> Result<Vec<i32>> {
         let records: Vec<HouseNumbers> = sqlx::query_as(
-            "SELECT DISTINCT house FROM deal WHERE project = $1 AND object_type = $2 ORDER BY house ",
+            r#"SELECT DISTINCT house
+                    FROM deal
+                    WHERE project = $1
+                      AND object_type = $2
+                      AND transfer_completed = false
+                    ORDER BY house "#,
         )
         .bind(project)
         .bind(object_type)
@@ -50,7 +55,13 @@ impl Db {
         house: i32,
     ) -> Result<Vec<i32>> {
         let records: Vec<ObjectNumbers> = sqlx::query_as(
-            "SELECT object FROM deal WHERE project = $1 AND object_type = $2 AND house = $3 ORDER BY object ",
+            r#"SELECT object
+            FROM deal
+            WHERE project = $1
+              AND object_type = $2
+              AND house = $3
+              AND transfer_completed = false
+            ORDER BY object "#,
         )
         .bind(project)
         .bind(object_type)
@@ -99,7 +110,11 @@ impl Db {
     ) -> Result<HouseData> {
         let rows = sqlx::query_as(
             r#"
-            SELECT * FROM deal WHERE project = $1 AND object_type = $2 AND house = $3 AND object = $4 "#,
+            SELECT * FROM deal
+                     WHERE project = $1
+                       AND object_type = $2
+                       AND house = $3
+                       AND object = $4 "#,
         )
         .bind(project)
         .bind(object_type)
