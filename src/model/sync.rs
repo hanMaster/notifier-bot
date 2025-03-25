@@ -1,7 +1,7 @@
 use crate::adapters::amo::AmoClient;
 use crate::model::Db;
 use crate::Result;
-use log::{error, info};
+use log::{debug, error, info};
 
 use crate::adapters::amo::city_impl::AmoCityClient;
 use crate::adapters::amo::format_impl::AmoFormatClient;
@@ -24,8 +24,11 @@ where
     let amo = Arc::new(amo);
 
     let db = Db::new().await;
-    let mut saved_ids = db.read_deal_ids_by_project(amo.project()).await.unwrap_or(vec![]);
-    println!("saved ids: {:?}", saved_ids);
+    let mut saved_ids = db
+        .read_deal_ids_by_project(amo.project())
+        .await
+        .unwrap_or(vec![]);
+    debug!("saved ids: {:?}", saved_ids);
 
     let funnels_res = amo.get_funnels().await;
     match funnels_res {
@@ -38,7 +41,16 @@ where
             for funnel in filtered {
                 res.push(sync_funnel(amo.clone(), &db, &mut saved_ids, funnel.id).await)
             }
-            println!("remain leads: {:?}", saved_ids);
+            info!("remain leads: {:?}", saved_ids);
+            if !saved_ids.is_empty() {
+                if db
+                    .mark_as_transferred(amo.project(), saved_ids)
+                    .await
+                    .is_err()
+                {
+                    error!("Failed to mark as transferred project");
+                };
+            }
             res
         }
         Err(e) => {

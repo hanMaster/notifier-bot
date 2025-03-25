@@ -1,11 +1,11 @@
+use crate::adapters::profit::DealForAdd;
 use crate::model::Db;
 use crate::Result;
-use log::{debug, error};
+use log::{debug, error, info};
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::FromRow;
 use std::ops::Add;
 use std::time::Duration;
-use crate::adapters::profit::DealForAdd;
 
 #[allow(dead_code)]
 #[derive(FromRow)]
@@ -65,7 +65,7 @@ impl Db {
         )
         .bind(project)
         .bind(object_type)
-            .bind(house)
+        .bind(house)
         .fetch_all(&self.db)
         .await?;
         let res = records.iter().map(|r| r.object).collect();
@@ -89,6 +89,19 @@ impl Db {
         .fetch_one(&self.db)
         .await?;
         debug!("Created row with id: {}", id);
+        Ok(())
+    }
+
+    pub async fn mark_as_transferred(&self, project: &str, ids: Vec<u64>) -> Result<()> {
+        info!("mark as transferred project: {}, ids: {:?}", project, ids);
+        for id in ids {
+            let res = sqlx::query("UPDATE deal SET transfer_completed = true WHERE project = $1 AND deal.deal_id = $2")
+                .bind(project)
+                .bind(id as i64)
+                .execute(&self.db)
+                .await?;
+            info!("{:?}", res);
+        }
         Ok(())
     }
 
