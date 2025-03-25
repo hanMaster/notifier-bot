@@ -22,6 +22,11 @@ where
     A: AmoClient + Send + Sync + 'static,
 {
     let amo = Arc::new(amo);
+
+    let db = Db::new().await;
+    let mut saved_ids = db.read_deal_ids_by_project(amo.project()).await.unwrap_or(vec![]);
+    println!("saved ids: {:?}", saved_ids);
+
     let funnels_res = amo.get_funnels().await;
     match funnels_res {
         Ok(funnels) => {
@@ -31,8 +36,9 @@ where
                 .collect::<Vec<_>>();
             let mut res = vec![];
             for funnel in filtered {
-                res.push(sync_funnel(amo.clone(), funnel.id).await)
+                res.push(sync_funnel(amo.clone(), &db, &mut saved_ids, funnel.id).await)
             }
+            println!("remain leads: {:?}", saved_ids);
             res
         }
         Err(e) => {
@@ -42,7 +48,12 @@ where
     }
 }
 
-async fn sync_funnel<A>(amo_client: Arc<A>, funnel_id: i64) -> Result<Vec<DealForAdd>>
+async fn sync_funnel<A>(
+    amo_client: Arc<A>,
+    db: &Db,
+    saved_ids: &mut Vec<u64>,
+    funnel_id: i64,
+) -> Result<Vec<DealForAdd>>
 where
     A: AmoClient + Send + Sync + 'static,
 {
@@ -54,14 +65,10 @@ where
     let mut new_data: Vec<DealForAdd> = vec![];
 
     if !leads.is_empty() {
-        let db = Db::new().await;
-        let saved_ids = db.read_deal_ids_by_project(amo_client.project()).await?;
-
-        info!("saved ids for {}: {:?}", amo_client.project(), saved_ids);
-
         let token = amo_client.profitbase_client().get_profit_token().await?;
         for lead in leads {
             if saved_ids.contains(&lead) {
+                saved_ids.retain(|i| *i != lead);
                 continue;
             }
             let profit_data = amo_client
@@ -71,7 +78,6 @@ where
             db.create_deal(&profit_data).await?;
             new_data.push(profit_data);
         }
-        db.db.close().await;
     }
 
     Ok(new_data)
