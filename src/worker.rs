@@ -32,7 +32,7 @@ pub fn do_work(bot: Bot) {
                     .await
                     .expect("Unable to send message to admin");
 
-                let results = sync().await;
+                let results = sync(&bot).await;
                 for res in results {
                     match res {
                         Ok(data) => {

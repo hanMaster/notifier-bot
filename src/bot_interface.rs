@@ -112,7 +112,7 @@ async fn make_house_kbd(project: &str, object_type: &str) -> KeyboardMarkup {
 async fn sync_handler(bot: Bot, msg: Message) -> HandlerResult {
     bot.send_message(msg.chat.id, "Начат поиск новых сделок...".to_string())
         .await?;
-    let results = sync().await;
+    let results = sync(&bot).await;
     let mut have_no_data = true;
     for res in results {
         match res {

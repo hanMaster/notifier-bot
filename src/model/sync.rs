@@ -6,18 +6,21 @@ use log::{debug, error, info};
 use crate::adapters::amo::city_impl::AmoCityClient;
 use crate::adapters::amo::format_impl::AmoFormatClient;
 use crate::adapters::profit::DealForAdd;
+use crate::config::config;
 use std::sync::Arc;
+use teloxide::prelude::{ChatId, Requester};
+use teloxide::Bot;
 
-pub async fn sync() -> Vec<Result<Vec<DealForAdd>>> {
+pub async fn sync(bot: &Bot) -> Vec<Result<Vec<DealForAdd>>> {
     let mut results: Vec<Result<Vec<DealForAdd>>> = vec![];
     let amo_city = AmoCityClient::new();
-    results.extend(sync_project(amo_city).await);
+    results.extend(sync_project(amo_city, bot).await);
     let amo_format = AmoFormatClient::new();
-    results.extend(sync_project(amo_format).await);
+    results.extend(sync_project(amo_format, bot).await);
     results
 }
 
-async fn sync_project<A>(amo: A) -> Vec<Result<Vec<DealForAdd>>>
+async fn sync_project<A>(amo: A, bot: &Bot) -> Vec<Result<Vec<DealForAdd>>>
 where
     A: AmoClient + Send + Sync + 'static,
 {
@@ -41,16 +44,7 @@ where
             for funnel in filtered {
                 res.push(sync_funnel(amo.clone(), &db, &mut saved_ids, funnel.id).await)
             }
-            info!("remain leads: {:?}", saved_ids);
-            if !saved_ids.is_empty() {
-                if db
-                    .mark_as_transferred(amo.project(), saved_ids)
-                    .await
-                    .is_err()
-                {
-                    error!("Failed to mark as transferred project");
-                };
-            }
+            mark_as_transferred(saved_ids, bot, &db, amo.project()).await;
             res
         }
         Err(e) => {
@@ -93,6 +87,32 @@ where
     }
 
     Ok(new_data)
+}
+
+async fn mark_as_transferred(saved_ids: Vec<u64>, bot: &Bot, db: &Db, project: &str) {
+    if !saved_ids.is_empty() {
+        info!("remain leads: {:?}", saved_ids);
+        match db.mark_as_transferred(project, &saved_ids).await {
+            Ok(_) => {
+                let admin_id = ChatId(config().ADMIN_ID);
+                for id in saved_ids {
+                    if bot
+                        .send_message(
+                            admin_id,
+                            format!("Project {} lead {} marked as transferred", project, id),
+                        )
+                        .await
+                        .is_err()
+                    {
+                        error!("Failed to send message to admin");
+                    };
+                }
+            }
+            Err(e) => {
+                error!("Failed to mark as transferred project: {e}");
+            }
+        };
+    }
 }
 
 #[cfg(test)]
