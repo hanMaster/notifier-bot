@@ -23,6 +23,7 @@ impl AmoClient for AmoCityClient {
             profitbase_client: ProfitbaseClient::new(
                 &config().PROF_CITY_ACCOUNT,
                 &config().PROF_CITY_API_KEY,
+                PROJECTS[0]
             ),
         }
     }

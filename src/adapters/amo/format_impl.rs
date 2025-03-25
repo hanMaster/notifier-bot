@@ -23,6 +23,7 @@ impl AmoClient for AmoFormatClient {
             profitbase_client: ProfitbaseClient::new(
                 &config().PROF_FORMAT_ACCOUNT,
                 &config().PROF_FORMAT_API_KEY,
+                PROJECTS[1]
             ),
         }
     }

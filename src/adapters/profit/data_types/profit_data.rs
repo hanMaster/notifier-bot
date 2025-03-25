@@ -11,8 +11,6 @@ pub struct ProfitData {
     pub number: String,
     #[serde(rename = "houseName")]
     pub house_name: String,
-    #[serde(rename = "projectName")]
-    pub project_name: String,
     pub attributes: Attrs,
     #[serde(rename = "soldAt")]
     pub sold_at: String,

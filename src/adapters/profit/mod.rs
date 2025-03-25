@@ -9,17 +9,18 @@ pub use crate::adapters::profit::data_types::deal::DealForAdd;
 mod error;
 mod data_types;
 
-
 pub struct ProfitbaseClient {
     pub account_id: &'static str,
     pub api_key: &'static str,
+    project: &'static str,
 }
 
 impl ProfitbaseClient {
-    pub fn new(account_id: &'static str, api_key: &'static str) -> ProfitbaseClient {
+    pub fn new(account_id: &'static str, api_key: &'static str, project: &'static str,) -> ProfitbaseClient {
         Self {
             account_id,
             api_key,
+            project,
         }
     }
 
@@ -97,7 +98,7 @@ impl ProfitbaseClient {
 
                 Ok(DealForAdd {
                     deal_id,
-                    project: p.project_name.clone(),
+                    project: self.project.to_string(),
                     house,
                     object_type,
                     object: p.number.parse::<i32>()?,
@@ -115,12 +116,13 @@ impl ProfitbaseClient {
 
 #[cfg(test)]
 mod tests {
+    use crate::bot_interface::PROJECTS;
     use crate::config::config;
     use super::*;
     fn setup() -> ProfitbaseClient {
         let account_id = &config().PROF_CITY_ACCOUNT;
         let api_key = &config().PROF_CITY_API_KEY;
-        ProfitbaseClient::new(account_id, api_key)
+        ProfitbaseClient::new(account_id, api_key, PROJECTS[0])
     }
     #[test]
     fn base_url() {

@@ -32,11 +32,6 @@ pub enum State {
         object_type: String,
         house: i32,
     },
-    ChooseAnswer {
-        project: String,
-        object_type: String,
-        house: i32,
-    },
 }
 
 #[derive(BotCommands, Clone)]
@@ -48,7 +43,7 @@ pub enum BotCommand {
     Sync,
 }
 
-pub fn bot_handler<'a>() -> Handler<'static, DependencyMap, HandlerResult, DpHandlerDescription> {
+pub fn bot_handler() -> Handler<'static, DependencyMap, HandlerResult, DpHandlerDescription> {
     dialogue::enter::<Update, InMemStorage<State>, State, _>()
         .branch(
             Update::filter_message()
