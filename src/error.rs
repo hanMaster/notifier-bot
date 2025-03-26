@@ -13,9 +13,18 @@ pub enum Error {
     AmoCRM(amo::Error),
     Profitbase(profit::Error),
     Request(teloxide::RequestError),
+    // -- Mailer
+    Mailer(mail_send::Error),
+
 }
 
 // region:    ---From
+
+impl From<mail_send::Error> for Error {
+    fn from(e: mail_send::Error) -> Self {
+        Error::Mailer(e)
+    }
+}
 
 impl From<amo::Error> for Error {
     fn from(e: amo::Error) -> Error {
