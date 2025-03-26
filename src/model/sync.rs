@@ -66,22 +66,25 @@ where
     info!("Syncing {} funnel {}", amo_client.project(), funnel_id);
     let leads = amo_client.get_funnel_leads(funnel_id).await?;
 
-    info!("leads: {:?}", leads);
+    info!("leads: {:?}", leads.iter().map(|l| l.deal_id).collect::<Vec<_>>());
 
     let mut new_data: Vec<DealForAdd> = vec![];
 
     if !leads.is_empty() {
         let token = amo_client.profitbase_client().get_profit_token().await?;
         for lead in leads {
-            if saved_ids.contains(&lead) {
-                saved_ids.retain(|i| *i != lead);
+            if saved_ids.contains(&lead.deal_id) {
+                saved_ids.retain(|i| *i != lead.deal_id);
+                if lead.days_limit != 30 {
+                    db.set_days_limit(amo_client.project(), lead.deal_id, lead.days_limit).await?;
+                }
                 continue;
             }
             let profit_data = amo_client
                 .profitbase_client()
-                .get_profit_data(lead, &token)
+                .get_profit_data(lead.deal_id, &token)
                 .await?;
-            db.create_deal(&profit_data).await?;
+            db.create_deal(&profit_data, lead.days_limit).await?;
             new_data.push(profit_data);
         }
     }

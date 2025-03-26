@@ -72,19 +72,20 @@ impl Db {
         Ok(res)
     }
 
-    pub async fn create_deal(&self, d: &DealForAdd) -> Result<()> {
+    pub async fn create_deal(&self, d: &DealForAdd, days_limit: i32) -> Result<()> {
         debug!("create deal with data: {:?}", &d);
         let (id,): (i64,) = sqlx::query_as(
             r#"
-                INSERT INTO deal (deal_id, project, house, object_type, object, facing, created_on)
-                VALUES($1, $2, $3, $4, $5, $6,$7) returning id"#,
+                INSERT INTO deal (deal_id, project, house, object_type, object, facing, days_limit, created_on)
+                VALUES($1, $2, $3, $4, $5, $6, $7, $8) returning id"#,
         )
-        .bind(d.deal_id as i32)
+        .bind(d.deal_id as i64)
         .bind(&d.project)
         .bind(d.house)
         .bind(&d.object_type)
         .bind(d.object)
         .bind(&d.facing)
+        .bind(days_limit)
         .bind(d.created_on)
         .fetch_one(&self.db)
         .await?;
@@ -95,15 +96,36 @@ impl Db {
     pub async fn mark_as_transferred(&self, project: &str, ids: &Vec<u64>) -> Result<()> {
         info!("mark as transferred project: {}, ids: {:?}", project, ids);
         for id in ids {
-            let res = sqlx::query(r#"
+            let res = sqlx::query(
+                r#"
                 UPDATE deal SET transfer_completed = true
-                            WHERE project = $1 AND deal.deal_id = $2"#)
-                .bind(project)
-                .bind(*id as i64)
-                .execute(&self.db)
-                .await?;
+                            WHERE project = $1 AND deal.deal_id = $2"#,
+            )
+            .bind(project)
+            .bind(*id as i64)
+            .execute(&self.db)
+            .await?;
             info!("{:?}", res);
         }
+        Ok(())
+    }
+
+    pub async fn set_days_limit(&self, project: &str, deal_id: u64, days_limit: i32) -> Result<()> {
+        info!(
+            "[set_days_limit] project: {}, deal_id: {:?}",
+            project, deal_id
+        );
+        let res = sqlx::query(
+            r#"
+                UPDATE deal SET days_limit = $1
+                            WHERE project = $2 AND deal_id = $3"#,
+        )
+        .bind(days_limit)
+        .bind(project)
+        .bind(deal_id as i64)
+        .execute(&self.db)
+        .await?;
+        info!("{:?}", res);
         Ok(())
     }
 

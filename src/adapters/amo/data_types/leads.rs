@@ -48,3 +48,9 @@ pub enum FlexibleType {
     Str(String),
     Int(i64),
 }
+
+#[derive(Debug)]
+pub struct Deal {
+    pub deal_id: u64,
+    pub days_limit: i32,
+}

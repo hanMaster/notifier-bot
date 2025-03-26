@@ -1,4 +1,4 @@
-use crate::adapters::amo::data_types::leads::Leads;
+use crate::adapters::amo::data_types::leads::{Deal, Leads};
 use crate::adapters::amo::data_types::pipeline::{Funnel, Pipeline};
 pub(crate) use crate::adapters::amo::error::{Error, Result};
 use crate::adapters::profit::ProfitbaseClient;
@@ -32,7 +32,7 @@ pub trait AmoClient {
             }
         }
     }
-    async fn get_funnel_leads(&self, funnel_id: i64) -> Result<Vec<u64>> {
+    async fn get_funnel_leads(&self, funnel_id: i64) -> Result<Vec<Deal>> {
         let url = format!(
             "{}leads?filter[statuses][0][pipeline_id]={}&filter[statuses][0][status_id]={}",
             self.base_url(),
@@ -48,7 +48,7 @@ pub trait AmoClient {
         }
         let mut data = response.json::<Leads>().await?;
         let mut next = data._links.next.take();
-        let mut leads = self.extract_lead_ids(data);
+        let mut leads = self.extract_dkp_deals(data);
 
         while next.is_some() {
             let client = Client::new()
@@ -57,13 +57,13 @@ pub trait AmoClient {
             let mut data = client.send().await?.json::<Leads>().await?;
 
             next = data._links.next.take();
-            let leads_in_while = self.extract_lead_ids(data);
+            let leads_in_while = self.extract_dkp_deals(data);
 
             leads.extend(leads_in_while);
         }
         Ok(leads)
     }
-    fn extract_lead_ids(&self, leads: Leads) -> Vec<u64>;
+    fn extract_dkp_deals(&self, leads: Leads) -> Vec<Deal>;
 
     fn project(&self) -> &str;
 

@@ -1,9 +1,10 @@
 use crate::adapters::amo::data_types::leads::FlexibleType::Str;
-use crate::adapters::amo::data_types::leads::{CustomField, Leads, Val};
+use crate::adapters::amo::data_types::leads::{CustomField, Deal, Leads, Val};
 use crate::adapters::amo::AmoClient;
 use crate::adapters::profit::ProfitbaseClient;
 use crate::bot_interface::PROJECTS;
 use crate::config::config;
+use log::debug;
 
 pub struct AmoCityClient {
     account_id: &'static str,
@@ -23,7 +24,7 @@ impl AmoClient for AmoCityClient {
             profitbase_client: ProfitbaseClient::new(
                 &config().PROF_CITY_ACCOUNT,
                 &config().PROF_CITY_API_KEY,
-                PROJECTS[0]
+                PROJECTS[0],
             ),
         }
     }
@@ -32,7 +33,7 @@ impl AmoClient for AmoCityClient {
         format!("https://{}.amocrm.ru/api/v4/", self.account_id)
     }
 
-    fn extract_lead_ids(&self, leads: Leads) -> Vec<u64> {
+    fn extract_dkp_deals(&self, leads: Leads) -> Vec<Deal> {
         leads
             ._embedded
             .leads
@@ -47,7 +48,33 @@ impl AmoClient for AmoCityClient {
                     }],
                 })
             })
-            .map(|l| l.id)
+            .map(|l| {
+                let id = l.id;
+                let flex_val = l
+                    .custom_fields_values
+                    .iter()
+                    .find(|v| v.field_id == 1635059);
+
+                debug!("FLEX {:?}", flex_val);
+
+                if let Some(custom_field) = flex_val {
+                    let flex_val = custom_field.values.first().unwrap().clone();
+                    let days_limit = if let Str(val) = flex_val.value {
+                        val.parse::<i32>().unwrap_or(30)
+                    } else {
+                        30
+                    };
+                    Deal {
+                        deal_id: id,
+                        days_limit,
+                    }
+                } else {
+                    Deal {
+                        deal_id: id,
+                        days_limit: 30,
+                    }
+                }
+            })
             .collect::<Vec<_>>()
     }
 
