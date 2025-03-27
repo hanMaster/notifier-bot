@@ -84,26 +84,30 @@ impl Db {
 
     pub async fn create_deal(&self, d: &DealForAdd) -> Result<()> {
         debug!("create deal with data: {:?}", &d);
-        let (id,): (i64,) = sqlx::query_as(
+        let (id, ): (i64,) = sqlx::query_as(
             r#"
                 INSERT INTO deal (deal_id, project, house, object_type, object, facing, days_limit, created_on)
                 VALUES($1, $2, $3, $4, $5, $6, $7, $8) returning id"#,
         )
-        .bind(d.deal_id as i64)
-        .bind(&d.project)
-        .bind(d.house)
-        .bind(&d.object_type)
-        .bind(d.object)
-        .bind(&d.facing)
-        .bind(d.days_limit)
-        .bind(d.created_on)
-        .fetch_one(&self.db)
-        .await?;
+            .bind(d.deal_id as i64)
+            .bind(&d.project)
+            .bind(d.house)
+            .bind(&d.object_type)
+            .bind(d.object)
+            .bind(&d.facing)
+            .bind(d.days_limit)
+            .bind(d.created_on)
+            .fetch_one(&self.db)
+            .await?;
         debug!("Created row with id: {}", id);
         Ok(())
     }
 
-    pub async fn mark_as_transferred(&self, project: &str, ids: &Vec<u64>) -> Result<Vec<DealData>> {
+    pub async fn mark_as_transferred(
+        &self,
+        project: &str,
+        ids: &Vec<u64>,
+    ) -> Result<Vec<DealData>> {
         info!("mark as transferred project: {}, ids: {:?}", project, ids);
         for id in ids {
             let res = sqlx::query(
@@ -134,25 +138,36 @@ impl Db {
             "[set_days_limit] project: {}, deal_id: {:?}",
             project, deal_id
         );
-        let res = sqlx::query(
-            r#"
+
+        let deal: DealData =
+            sqlx::query_as("SELECT * FROM deal WHERE project = $1 AND deal_id = $2")
+                .bind(project)
+                .bind(deal_id as i64)
+                .fetch_one(&self.db)
+                .await?;
+
+        if deal.days_limit != days_limit {
+            let res = sqlx::query(
+                r#"
                 UPDATE deal SET days_limit = $1
                             WHERE project = $2 AND deal_id = $3"#,
-        )
-        .bind(days_limit)
-        .bind(project)
-        .bind(deal_id as i64)
-        .execute(&self.db)
-        .await?;
-        info!("{:?}", res);
+            )
+            .bind(days_limit)
+            .bind(project)
+            .bind(deal_id as i64)
+            .execute(&self.db)
+            .await?;
+            info!("{:?}", res);
+        }
         Ok(())
     }
 
     pub async fn read_deal_ids_by_project(&self, project: &str) -> Result<Vec<u64>> {
-        let records: Vec<DealData> = sqlx::query_as("SELECT * FROM deal WHERE project = $1 AND transfer_completed = false")
-            .bind(project)
-            .fetch_all(&self.db)
-            .await?;
+        let records: Vec<DealData> =
+            sqlx::query_as("SELECT * FROM deal WHERE project = $1 AND transfer_completed = false")
+                .bind(project)
+                .fetch_all(&self.db)
+                .await?;
         let res = records.iter().map(|r| r.deal_id).collect();
         Ok(res)
     }

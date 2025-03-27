@@ -118,10 +118,10 @@ where
     Ok(new_data)
 }
 
-async fn mark_as_transferred(saved_ids: Vec<u64>, bot: &Bot, db: &Db, project: &str) {
-    if !saved_ids.is_empty() {
-        info!("remain leads: {:?}", saved_ids);
-        match db.mark_as_transferred(project, &saved_ids).await {
+async fn mark_as_transferred(remain_ids: Vec<u64>, bot: &Bot, db: &Db, project: &str) {
+    if !remain_ids.is_empty() {
+        info!("remain leads: {:?}", remain_ids);
+        match db.mark_as_transferred(project, &remain_ids).await {
             Ok(rows) => {
                 let admin_id = ChatId(config().ADMIN_ID);
                 for r in rows {
