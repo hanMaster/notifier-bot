@@ -10,7 +10,6 @@ use mail_send::SmtpClientBuilder;
 
 mod data_types;
 
-
 pub struct Email {
     receivers: Vec<(String, String)>,
 }
@@ -26,8 +25,10 @@ impl Email {
         let rec = config
             .split(';')
             .map(|s| {
-                let parts = s.split(':').collect::<Vec<_>>();
-                (parts[0].to_string(), parts[1].to_string())
+                let parts = s.split(':').map(|p| p.to_string()).collect::<Vec<_>>();
+                let name = parts.first().map(|i| i.clone()).unwrap_or_default();
+                let email = parts.last().map(|i| i.clone()).unwrap_or_default();
+                (name, email)
             })
             .collect::<Vec<(String, String)>>();
         info!("rec: {:?}", rec);
@@ -42,7 +43,7 @@ impl Email {
         let tpl = DkpObjects::new(&header, content);
         self.send(subject, tpl.render()?).await?;
         Ok(())
-    }    
+    }
 
     pub async fn deadline_notification(&self, deals: Vec<DealForAdd>) -> Result<()> {
         let subject = "Дедлайн по передаче объектов по ДКП";
