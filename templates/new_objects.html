@@ -136,7 +136,21 @@
                                                                 font-size: 16px;
                                                             "
                                                 >
-                                                    {{payload}}
+                                                    <ol>
+                                                        {% for deal in deals %}
+                                                        <li style="margin: 20px 0">
+                                                            <span>Проект: {{deal.project | e}}</span><br/>
+                                                            <span>Дом № {{deal.house | e}}</span><br/>
+                                                            <span>Тип объекта: {{deal.object_type | e}}</span><br/>
+                                                            <span>№ {{deal.object | e}}</span><br/>
+                                                            {% if deal.facing.len() > 0 %}
+                                                            <span>Тип отделки: {{deal.facing | e}}</span><br/>
+                                                            {% endif %}
+                                                            <span>Дата регистрации: {{deal.reg_date | e}}</span><br/>
+                                                            <span>Передать объект до: {{deal.exp_date | e}}</span><br/>
+                                                        </li>
+                                                        {% endfor %}
+                                                    </ol>
                                                     <br/>
                                                 </div>
                                             </td>

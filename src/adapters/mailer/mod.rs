@@ -1,19 +1,15 @@
+use crate::adapters::mailer::data_types::DealInfo;
 use crate::adapters::profit::DealForAdd;
 use crate::config::config;
 use crate::Result;
 use askama::Template;
+use data_types::NewObjects;
 use log::info;
 use mail_send::mail_builder::MessageBuilder;
 use mail_send::SmtpClientBuilder;
-use std::ops::Add;
-use std::time::Duration;
 
-#[derive(Template)]
-#[template(path = "new_objects.html")]
-struct NewObjects<'a> {
-    date: &'a str,
-    payload: &'a str,
-}
+mod data_types;
+
 
 pub struct Email {
     receivers: Vec<(String, String)>,
@@ -40,38 +36,9 @@ impl Email {
 
     pub async fn new_objects_notification(&self, deals: Vec<DealForAdd>) -> Result<()> {
         let subject = "Новые сделки по ДКП";
-        // let content = deals.iter().map(|d| d.to_string()).collect::<Vec<_>>();
-        // let rows = content.join("<br />");
-        let facing = if deals[0].object_type.eq("Квартиры") {
-            format!("Тип отделки: {}\n", deals[0].facing)
-        } else {
-            "".to_string()
-        };
-        let payload = format!(
-            "<p>Проект: {}<br/>
-            Дом № {}<br/>
-            Тип объекта: {}<br/>
-            № {}<br/>
-            Тип отделки: {}<br/>
-            Дата регистрации: {}<br/>
-            Передать объект до: {}</p><br/>",
-            deals[0].project,
-            deals[0].house,
-            deals[0].object_type,
-            deals[0].object,
-            facing,
-            deals[0].created_on.format("%d.%m.%Y"),
-            deals[0]
-                .created_on
-                .add(Duration::from_secs(86400 * deals[0].days_limit as u64))
-                .format("%d.%m.%Y")
-        );
-        // self.send(subject, payload).await?;
-        let today = chrono::Local::now().format("%d.%m.%Y").to_string();
-        let tpl = NewObjects {
-            date: &today,
-            payload: &payload,
-        };
+        let content: Vec<DealInfo> = deals.iter().map(|d| d.into()).collect();
+        let today = chrono::Local::now().format("%d.%m.%Y %H:%M").to_string();
+        let tpl = NewObjects::new(&today, content);
         self.send(subject, tpl.render().unwrap()).await?;
         Ok(())
     }
@@ -98,25 +65,6 @@ impl Email {
         info!("Email sent");
         Ok(())
     }
-    fn prepare_email_content(&self) -> String {
-        format!(
-            r#"
-        <!DOCTYPE html>
-<html lang="ru">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title></title>
-    </head>
-    <body style="font-family: sans-serif">
-
-        <p>Payload: <span>{}</span></p>
-    </body>
-</html>
-        "#,
-            "test",
-        )
-    }
 }
 
 #[cfg(test)]
@@ -127,7 +75,7 @@ mod test {
     #[tokio::test]
     async fn mail_send_test() {
         let email = Email::new();
-        let payload = email.prepare_email_content();
+        let payload = "<div>Hello World</div>".to_owned();
         let subject = "Тестовое сообщение от бота";
         let send_result = email.send(&subject, payload).await;
 
