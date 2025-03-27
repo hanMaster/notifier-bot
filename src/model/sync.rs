@@ -31,8 +31,10 @@ async fn notify_by_email(data: &Vec<Result<Vec<DealForAdd>>>) -> Result<()> {
             }
         }
     }
-    let email = Email::new();
-    email.new_objects_notification(clean_data).await?;
+    if !clean_data.is_empty() {
+        let email = Email::new();
+        email.new_objects_notification(clean_data).await?;
+    }
     Ok(())
 }
 
