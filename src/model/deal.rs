@@ -32,9 +32,10 @@ pub struct ObjectNumbers {
 
 impl Db {
     pub async fn get_all_undone_deals(&self) -> Result<Vec<DealData>> {
-        let records: Vec<DealData> = sqlx::query_as("SELECT * FROM deal WHERE transfer_completed = false")
-            .fetch_all(&self.db)
-            .await?;
+        let records: Vec<DealData> =
+            sqlx::query_as("SELECT * FROM deal WHERE transfer_completed = false")
+                .fetch_all(&self.db)
+                .await?;
         debug!("[list_objects] Records fetched {}", records.len());
         Ok(records)
     }
@@ -102,7 +103,7 @@ impl Db {
         Ok(())
     }
 
-    pub async fn mark_as_transferred(&self, project: &str, ids: &Vec<u64>) -> Result<()> {
+    pub async fn mark_as_transferred(&self, project: &str, ids: &Vec<u64>) -> Result<Vec<DealData>> {
         info!("mark as transferred project: {}, ids: {:?}", project, ids);
         for id in ids {
             let res = sqlx::query(
@@ -116,7 +117,16 @@ impl Db {
             .await?;
             info!("{:?}", res);
         }
-        Ok(())
+
+        let done_objects: Vec<DealData> =
+            sqlx::query_as("SELECT * FROM deal WHERE transfer_completed = true")
+                .fetch_all(&self.db)
+                .await?;
+        let filtered: Vec<DealData> = done_objects
+            .into_iter()
+            .filter(|o| ids.contains(&o.deal_id))
+            .collect();
+        Ok(filtered)
     }
 
     pub async fn set_days_limit(&self, project: &str, deal_id: u64, days_limit: i32) -> Result<()> {
@@ -139,7 +149,7 @@ impl Db {
     }
 
     pub async fn read_deal_ids_by_project(&self, project: &str) -> Result<Vec<u64>> {
-        let records: Vec<DealData> = sqlx::query_as("SELECT * FROM deal WHERE project = $1")
+        let records: Vec<DealData> = sqlx::query_as("SELECT * FROM deal WHERE project = $1 AND transfer_completed = false")
             .bind(project)
             .fetch_all(&self.db)
             .await?;

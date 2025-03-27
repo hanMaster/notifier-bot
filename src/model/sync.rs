@@ -122,13 +122,13 @@ async fn mark_as_transferred(saved_ids: Vec<u64>, bot: &Bot, db: &Db, project: &
     if !saved_ids.is_empty() {
         info!("remain leads: {:?}", saved_ids);
         match db.mark_as_transferred(project, &saved_ids).await {
-            Ok(_) => {
+            Ok(rows) => {
                 let admin_id = ChatId(config().ADMIN_ID);
-                for id in saved_ids {
+                for r in rows {
                     if bot
                         .send_message(
                             admin_id,
-                            format!("Project {} lead {} marked as transferred", project, id),
+                            format!("Проект: {}, Дом №{}, к.{} ({}) передан!", r.project, r.house, r.object, r.object_type),
                         )
                         .await
                         .is_err()
