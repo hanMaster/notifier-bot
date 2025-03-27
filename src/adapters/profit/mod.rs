@@ -103,6 +103,7 @@ impl ProfitbaseClient {
                     object_type,
                     object: p.number.parse::<i32>()?,
                     facing: attrs.facing.unwrap_or("".to_string()),
+                    days_limit: 30,
                     created_on,
                 })
             } else {

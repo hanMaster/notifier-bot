@@ -3,7 +3,7 @@ use std::fmt::{Display, Formatter};
 use std::ops::Add;
 use std::time::Duration;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct DealForAdd {
     pub deal_id: u64,
     pub project: String,
@@ -11,6 +11,7 @@ pub struct DealForAdd {
     pub object_type: String,
     pub object: i32,
     pub facing: String,
+    pub days_limit: i32,
     pub created_on: NaiveDateTime,
 }
 
@@ -30,7 +31,7 @@ impl Display for DealForAdd {
             self.object,
             facing,
             self.created_on.format("%d.%m.%Y"),
-            self.created_on.add(Duration::from_secs(2592000)) // 30 days
+            self.created_on.add(Duration::from_secs(86400 * self.days_limit as u64))
                 .format("%d.%m.%Y")
         )
     }

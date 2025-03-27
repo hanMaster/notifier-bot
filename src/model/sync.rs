@@ -5,6 +5,7 @@ use log::{debug, error, info};
 
 use crate::adapters::amo::city_impl::AmoCityClient;
 use crate::adapters::amo::format_impl::AmoFormatClient;
+use crate::adapters::mailer::Email;
 use crate::adapters::profit::DealForAdd;
 use crate::config::config;
 use std::sync::Arc;
@@ -17,7 +18,22 @@ pub async fn sync(bot: &Bot) -> Vec<Result<Vec<DealForAdd>>> {
     results.extend(sync_project(amo_city, bot).await);
     let amo_format = AmoFormatClient::new();
     results.extend(sync_project(amo_format, bot).await);
+    let _ = notify_by_email(&results).await;
     results
+}
+
+async fn notify_by_email(data: &Vec<Result<Vec<DealForAdd>>>) -> Result<()> {
+    let mut clean_data: Vec<DealForAdd> = vec![];
+    for res in data {
+        if let Ok(v) = res {
+            if !v.is_empty() {
+                clean_data.extend(v.clone());
+            }
+        }
+    }
+    let email = Email::new();
+    email.new_objects_notification(clean_data).await?;
+    Ok(())
 }
 
 async fn sync_project<A>(amo: A, bot: &Bot) -> Vec<Result<Vec<DealForAdd>>>
@@ -66,7 +82,10 @@ where
     info!("Syncing {} funnel {}", amo_client.project(), funnel_id);
     let leads = amo_client.get_funnel_leads(funnel_id).await?;
 
-    info!("leads: {:?}", leads.iter().map(|l| l.deal_id).collect::<Vec<_>>());
+    info!(
+        "leads: {:?}",
+        leads.iter().map(|l| l.deal_id).collect::<Vec<_>>()
+    );
 
     let mut new_data: Vec<DealForAdd> = vec![];
 
@@ -76,15 +95,17 @@ where
             if saved_ids.contains(&lead.deal_id) {
                 saved_ids.retain(|i| *i != lead.deal_id);
                 if lead.days_limit != 30 {
-                    db.set_days_limit(amo_client.project(), lead.deal_id, lead.days_limit).await?;
+                    db.set_days_limit(amo_client.project(), lead.deal_id, lead.days_limit)
+                        .await?;
                 }
                 continue;
             }
-            let profit_data = amo_client
+            let mut profit_data = amo_client
                 .profitbase_client()
                 .get_profit_data(lead.deal_id, &token)
                 .await?;
-            db.create_deal(&profit_data, lead.days_limit).await?;
+            profit_data.days_limit = lead.days_limit;
+            db.create_deal(&profit_data).await?;
             new_data.push(profit_data);
         }
     }

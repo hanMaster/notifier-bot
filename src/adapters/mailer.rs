@@ -3,6 +3,7 @@ use crate::Result;
 use log::info;
 use mail_send::mail_builder::MessageBuilder;
 use mail_send::SmtpClientBuilder;
+use crate::adapters::profit::DealForAdd;
 
 pub struct Email {
     receivers: Vec<(String, String)>,
@@ -27,9 +28,11 @@ impl Email {
         rec
     }
 
-    pub async fn new_objects_notification(&self, deals: Vec<String>) -> Result<()> {
+    pub async fn new_objects_notification(&self, deals: Vec<DealForAdd>) -> Result<()> {
         let subject = "Новые сделки по ДКП";
-        let payload = deals.join("<br />");
+        let content = deals.iter().map(|d| d.to_string()).collect::<Vec<_>>();
+        let rows = content.join("<br />");
+        let payload = format!("<div>{}</div>", rows);
         self.send(subject, payload).await?;
         Ok(())
     }
@@ -106,32 +109,5 @@ mod test {
         let receivers = Email::get_receivers();
         assert_ne!(receivers.len(), 0);
         println!("{:?}", receivers);
-    }
-
-    #[tokio::test]
-    async fn send_new() {
-        let email = Email::new();
-        let deals = vec![r#"
-        <div>
-        Проект: ЖК Формат<br />
-Дом № 14<br />
-Тип объекта: Квартиры<br />
-№ 52<br />
-Тип отделки: Предчистовая<br />
-Дата регистрации: 19.02.2025<br />
-Передать объект до: 21.03.2025
-</div>
-        "#.to_string(), r#"
-        <div>
-        Проект: DNS Сити<br />
-Дом № 1<br />
-Тип объекта: Кладовки<br />
-№ 17<br />
-Дата регистрации: 20.03.2025<br />
-Передать объект до: 19.04.2025
-</div>
-        "#.to_string()];
-        let res = email.new_objects_notification(deals).await;
-        assert!(res.is_ok());
     }
 }

@@ -72,7 +72,7 @@ impl Db {
         Ok(res)
     }
 
-    pub async fn create_deal(&self, d: &DealForAdd, days_limit: i32) -> Result<()> {
+    pub async fn create_deal(&self, d: &DealForAdd) -> Result<()> {
         debug!("create deal with data: {:?}", &d);
         let (id,): (i64,) = sqlx::query_as(
             r#"
@@ -85,7 +85,7 @@ impl Db {
         .bind(&d.object_type)
         .bind(d.object)
         .bind(&d.facing)
-        .bind(days_limit)
+        .bind(d.days_limit)
         .bind(d.created_on)
         .fetch_one(&self.db)
         .await?;
