@@ -1,8 +1,10 @@
+use crate::adapters::profit::DealForAdd;
+use crate::model::deal::DealData;
+use askama::Template;
 use std::ops::Add;
 use std::time::Duration;
-use askama::Template;
-use crate::adapters::profit::DealForAdd;
 
+#[derive(Debug)]
 pub struct DealInfo {
     pub project: String,
     pub house: i32,
@@ -16,8 +18,31 @@ pub struct DealInfo {
 impl From<&DealForAdd> for DealInfo {
     fn from(value: &DealForAdd) -> Self {
         let reg_date = value.created_on.format("%d.%m.%Y").to_string();
-        let exp_date = value.created_on.add(Duration::from_secs(86400 * value.days_limit as u64))
-            .format("%d.%m.%Y").to_string();
+        let exp_date = value
+            .created_on
+            .add(Duration::from_secs(86400 * value.days_limit as u64))
+            .format("%d.%m.%Y")
+            .to_string();
+        Self {
+            project: value.project.clone(),
+            house: value.house,
+            object_type: value.object_type.clone(),
+            object: value.object,
+            facing: value.facing.clone(),
+            reg_date,
+            exp_date,
+        }
+    }
+}
+
+impl From<DealData> for DealInfo {
+    fn from(value: DealData) -> Self {
+        let reg_date = value.created_on.format("%d.%m.%Y").to_string();
+        let exp_date = value
+            .created_on
+            .add(Duration::from_secs(86400 * value.days_limit as u64))
+            .format("%d.%m.%Y")
+            .to_string();
         Self {
             project: value.project.clone(),
             house: value.house,

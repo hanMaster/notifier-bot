@@ -1,18 +1,19 @@
 use crate::bot_interface::{bot_handler, BotCommand, State};
 pub use crate::error::Result;
+use crate::model::init_db;
 use dotenvy::dotenv;
 use log::info;
 use teloxide::dispatching::dialogue::InMemStorage;
 use teloxide::dptree::deps;
 use teloxide::{prelude::*, utils::command::BotCommands};
-use crate::model::init_db;
 
+mod adapters;
+mod bot_interface;
 mod config;
+mod deadline_worker;
 mod error;
 mod model;
-mod adapters;
 mod worker;
-mod bot_interface;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -30,8 +31,10 @@ async fn main() -> Result<()> {
         .expect("Failed to set bot commands");
 
     let cloned_bot = bot.clone();
-
     worker::do_work(cloned_bot);
+
+    let cloned_bot = bot.clone();
+    deadline_worker::do_work(cloned_bot);
 
     Dispatcher::builder(bot, bot_handler())
         .dependencies(deps![InMemStorage::<State>::new()])
@@ -42,12 +45,3 @@ async fn main() -> Result<()> {
 
     Ok(())
 }
-
-
-
-
-
-
-
-
-

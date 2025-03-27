@@ -33,8 +33,9 @@ pub struct Config {
     pub PROF_CITY_API_KEY: String,
     pub PROF_FORMAT_ACCOUNT: String,
     pub PROF_FORMAT_API_KEY: String,
-    // -- Schedule for worker
+    // -- Schedule for workers
     pub SCHEDULE: String,
+    pub DEADLINE_SCHEDULE: String,
     // -- Mailer
     pub SMTP_SERVER: String,
     pub SMTP_PORT: u16,
@@ -60,6 +61,7 @@ impl Config {
             PROF_FORMAT_ACCOUNT: get_env("PROF_FORMAT_ACCOUNT")?,
             PROF_FORMAT_API_KEY: get_env("PROF_FORMAT_API_KEY")?,
             SCHEDULE: get_env("SCHEDULE")?,
+            DEADLINE_SCHEDULE: get_env("DEADLINE_SCHEDULE")?,
             SMTP_SERVER: get_env("SMTP_SERVER")?,
             SMTP_PORT: get_env_as_parse("SMTP_PORT")?,
             FROM: get_env("FROM")?,

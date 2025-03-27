@@ -8,7 +8,7 @@ use log::info;
 use mail_send::mail_builder::MessageBuilder;
 use mail_send::SmtpClientBuilder;
 
-mod data_types;
+pub mod data_types;
 
 pub struct Email {
     receivers: Vec<(String, String)>,
@@ -26,8 +26,8 @@ impl Email {
             .split(';')
             .map(|s| {
                 let parts = s.split(':').map(|p| p.to_string()).collect::<Vec<_>>();
-                let name = parts.first().map(|i| i.clone()).unwrap_or_default();
-                let email = parts.last().map(|i| i.clone()).unwrap_or_default();
+                let name = parts.first().cloned().unwrap_or_default();
+                let email = parts.last().cloned().unwrap_or_default();
                 (name, email)
             })
             .collect::<Vec<(String, String)>>();
@@ -45,12 +45,11 @@ impl Email {
         Ok(())
     }
 
-    pub async fn deadline_notification(&self, deals: Vec<DealForAdd>) -> Result<()> {
+    pub async fn deadline_notification(&self, deals: Vec<DealInfo>) -> Result<()> {
         let subject = "Дедлайн по передаче объектов по ДКП";
-        let content: Vec<DealInfo> = deals.iter().map(|d| d.into()).collect();
         let today = chrono::Local::now().format("%d.%m.%Y %H:%M");
         let header = format!("Дедлайн по передаче объектов на {today}");
-        let tpl = DkpObjects::new(&header, content);
+        let tpl = DkpObjects::new(&header, deals);
         self.send(subject, tpl.render()?).await?;
         Ok(())
     }

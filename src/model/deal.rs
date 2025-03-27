@@ -9,7 +9,7 @@ use std::time::Duration;
 
 #[allow(dead_code)]
 #[derive(FromRow)]
-pub struct HouseData {
+pub struct DealData {
     pub id: i32,
     pub deal_id: u64,
     pub project: String,
@@ -17,6 +17,7 @@ pub struct HouseData {
     pub object_type: String,
     pub object: i32,
     pub facing: String,
+    pub days_limit: i32,
     pub created_on: NaiveDateTime,
     pub updated_on: String,
 }
@@ -30,6 +31,14 @@ pub struct ObjectNumbers {
 }
 
 impl Db {
+    pub async fn get_all_undone_deals(&self) -> Result<Vec<DealData>> {
+        let records: Vec<DealData> = sqlx::query_as("SELECT * FROM deal WHERE transfer_completed = false")
+            .fetch_all(&self.db)
+            .await?;
+        debug!("[list_objects] Records fetched {}", records.len());
+        Ok(records)
+    }
+
     pub async fn list_house_numbers(&self, project: &str, object_type: &str) -> Result<Vec<i32>> {
         let records: Vec<HouseNumbers> = sqlx::query_as(
             r#"SELECT DISTINCT house
@@ -130,7 +139,7 @@ impl Db {
     }
 
     pub async fn read_deal_ids_by_project(&self, project: &str) -> Result<Vec<u64>> {
-        let records: Vec<HouseData> = sqlx::query_as("SELECT * FROM deal WHERE project = $1")
+        let records: Vec<DealData> = sqlx::query_as("SELECT * FROM deal WHERE project = $1")
             .bind(project)
             .fetch_all(&self.db)
             .await?;
@@ -144,7 +153,7 @@ impl Db {
         object_type: &str,
         house: i32,
         number: i32,
-    ) -> Result<HouseData> {
+    ) -> Result<DealData> {
         let rows = sqlx::query_as(
             r#"
             SELECT * FROM deal

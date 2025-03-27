@@ -25,15 +25,15 @@ pub async fn sync(bot: &Bot) -> Vec<Result<Vec<DealForAdd>>> {
     results
 }
 
-async fn notify_by_email(data: &Vec<Result<Vec<DealForAdd>>>) -> Result<()> {
+async fn notify_by_email(data: &[Result<Vec<DealForAdd>>]) -> Result<()> {
     let mut clean_data: Vec<DealForAdd> = vec![];
-    for res in data {
-        if let Ok(v) = res {
-            if !v.is_empty() {
-                clean_data.extend(v.clone());
-            }
+
+    data.iter().flatten().for_each(|v| {
+        if !v.is_empty() {
+            clean_data.extend(v.clone());
         }
-    }
+    });
+
     if !clean_data.is_empty() {
         let email = Email::new();
         email.new_objects_notification(clean_data).await?;

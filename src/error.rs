@@ -16,10 +16,18 @@ pub enum Error {
     // -- Mailer
     Mailer(mail_send::Error),
     // -- Askama
-    Tmpl(askama::Error)
+    Tmpl(askama::Error),
+    // -- Chrono
+    Time(chrono::OutOfRangeError)
 }
 
 // region:    ---From
+
+impl From<chrono::OutOfRangeError> for Error {
+    fn from(e: chrono::OutOfRangeError) -> Self {
+        Error::Time(e)
+    }
+}
 
 impl From<askama::Error> for Error {
     fn from(e: askama::Error) -> Self {
