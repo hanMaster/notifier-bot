@@ -1,9 +1,19 @@
+use crate::adapters::profit::DealForAdd;
 use crate::config::config;
 use crate::Result;
+use askama::Template;
 use log::info;
 use mail_send::mail_builder::MessageBuilder;
 use mail_send::SmtpClientBuilder;
-use crate::adapters::profit::DealForAdd;
+use std::ops::Add;
+use std::time::Duration;
+
+#[derive(Template)]
+#[template(path = "new_objects.html")]
+struct NewObjects<'a> {
+    date: &'a str,
+    payload: &'a str,
+}
 
 pub struct Email {
     receivers: Vec<(String, String)>,
@@ -30,16 +40,43 @@ impl Email {
 
     pub async fn new_objects_notification(&self, deals: Vec<DealForAdd>) -> Result<()> {
         let subject = "Новые сделки по ДКП";
-        let content = deals.iter().map(|d| d.to_string()).collect::<Vec<_>>();
-        let rows = content.join("<br />");
-        let payload = format!("<div>{}</div>", rows);
-        self.send(subject, payload).await?;
+        // let content = deals.iter().map(|d| d.to_string()).collect::<Vec<_>>();
+        // let rows = content.join("<br />");
+        let facing = if deals[0].object_type.eq("Квартиры") {
+            format!("Тип отделки: {}\n", deals[0].facing)
+        } else {
+            "".to_string()
+        };
+        let payload = format!(
+            "<p>Проект: {}<br/>
+            Дом № {}<br/>
+            Тип объекта: {}<br/>
+            № {}<br/>
+            Тип отделки: {}<br/>
+            Дата регистрации: {}<br/>
+            Передать объект до: {}</p><br/>",
+            deals[0].project,
+            deals[0].house,
+            deals[0].object_type,
+            deals[0].object,
+            facing,
+            deals[0].created_on.format("%d.%m.%Y"),
+            deals[0]
+                .created_on
+                .add(Duration::from_secs(86400 * deals[0].days_limit as u64))
+                .format("%d.%m.%Y")
+        );
+        // self.send(subject, payload).await?;
+        let today = chrono::Local::now().format("%d.%m.%Y").to_string();
+        let tpl = NewObjects {
+            date: &today,
+            payload: &payload,
+        };
+        self.send(subject, tpl.render().unwrap()).await?;
         Ok(())
     }
 
     pub async fn send(&self, subject: &str, payload: String) -> Result<()> {
-        info!("Sending email with {}", payload);
-
         let username = config().LOGIN.clone();
         let secret = config().PASSWORD.clone();
 
