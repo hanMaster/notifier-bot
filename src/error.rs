@@ -15,10 +15,17 @@ pub enum Error {
     Request(teloxide::RequestError),
     // -- Mailer
     Mailer(mail_send::Error),
-
+    // -- Askama
+    Tmpl(askama::Error)
 }
 
 // region:    ---From
+
+impl From<askama::Error> for Error {
+    fn from(e: askama::Error) -> Self {
+        Error::Tmpl(e)
+    }
+}
 
 impl From<mail_send::Error> for Error {
     fn from(e: mail_send::Error) -> Self {

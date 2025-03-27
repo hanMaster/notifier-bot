@@ -18,7 +18,10 @@ pub async fn sync(bot: &Bot) -> Vec<Result<Vec<DealForAdd>>> {
     results.extend(sync_project(amo_city, bot).await);
     let amo_format = AmoFormatClient::new();
     results.extend(sync_project(amo_format, bot).await);
-    let _ = notify_by_email(&results).await;
+    let res = notify_by_email(&results).await;
+    if res.is_err() {
+        error!("Failed to send email {:?}", res);
+    }
     results
 }
 

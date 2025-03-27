@@ -3,7 +3,7 @@ use crate::adapters::profit::DealForAdd;
 use crate::config::config;
 use crate::Result;
 use askama::Template;
-use data_types::NewObjects;
+use data_types::DkpObjects;
 use log::info;
 use mail_send::mail_builder::MessageBuilder;
 use mail_send::SmtpClientBuilder;
@@ -37,9 +37,20 @@ impl Email {
     pub async fn new_objects_notification(&self, deals: Vec<DealForAdd>) -> Result<()> {
         let subject = "Новые сделки по ДКП";
         let content: Vec<DealInfo> = deals.iter().map(|d| d.into()).collect();
-        let today = chrono::Local::now().format("%d.%m.%Y %H:%M").to_string();
-        let tpl = NewObjects::new(&today, content);
-        self.send(subject, tpl.render().unwrap()).await?;
+        let today = chrono::Local::now().format("%d.%m.%Y %H:%M");
+        let header = format!("Новые объекты по ДКП на {today}");
+        let tpl = DkpObjects::new(&header, content);
+        self.send(subject, tpl.render()?).await?;
+        Ok(())
+    }    
+
+    pub async fn deadline_notification(&self, deals: Vec<DealForAdd>) -> Result<()> {
+        let subject = "Дедлайн по передаче объектов по ДКП";
+        let content: Vec<DealInfo> = deals.iter().map(|d| d.into()).collect();
+        let today = chrono::Local::now().format("%d.%m.%Y %H:%M");
+        let header = format!("Дедлайн по передаче объектов на {today}");
+        let tpl = DkpObjects::new(&header, content);
+        self.send(subject, tpl.render()?).await?;
         Ok(())
     }
 

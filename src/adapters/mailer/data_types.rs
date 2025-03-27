@@ -31,14 +31,14 @@ impl From<&DealForAdd> for DealInfo {
 }
 
 #[derive(Template)]
-#[template(path = "new_objects.html")]
-pub struct NewObjects<'a> {
-    date: &'a str,
+#[template(path = "template.html")]
+pub struct DkpObjects<'a> {
+    header: &'a str,
     deals: Vec<DealInfo>,
 }
 
-impl<'a> NewObjects<'a> {
-    pub fn new(date: &'a str, deals: Vec<DealInfo>) -> Self {
-        Self { date, deals }
+impl<'a> DkpObjects<'a> {
+    pub fn new(header: &'a str, deals: Vec<DealInfo>) -> Self {
+        Self { header, deals }
     }
 }
