@@ -235,7 +235,7 @@ pub async fn prepare_response(project: &str, object_type: &str, house: i32, numb
                 facing,
                 b.created_on.format("%d.%m.%Y"),
                 b.created_on
-                    .add(Duration::from_secs(2592000)) // 30 days
+                    .add(Duration::from_secs(86400 * b.days_limit as u64))
                     .format("%d.%m.%Y")
             );
 
