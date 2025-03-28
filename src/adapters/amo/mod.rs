@@ -1,7 +1,9 @@
-use crate::adapters::amo::data_types::leads::{Deal, Leads};
+use log::debug;
+use crate::adapters::amo::data_types::leads::{CustomField, Deal, Leads};
 use crate::adapters::amo::data_types::pipeline::{Funnel, Pipeline};
 pub(crate) use crate::adapters::amo::error::{Error, Result};
 use crate::adapters::profit::ProfitbaseClient;
+use crate::bot_interface::PROJECTS;
 use reqwest::{Client, StatusCode};
 
 mod data_types;
@@ -71,4 +73,28 @@ pub trait AmoClient {
 
     fn pipeline_id(&self) -> i64;
     fn token(&self) -> &str;
+
+    fn deal_with_days_limit(&self, deal_id: u64, flex_value: Option<&CustomField>) -> Deal {
+        let default_days_limit = if self.project().eq(PROJECTS[0]) {
+            60
+        } else {
+            30
+        };
+        match flex_value {
+            None => Deal {
+                deal_id,
+                days_limit: default_days_limit,
+            },
+            Some(custom_field) => {
+                let flex_val = custom_field.values.first().unwrap().clone();
+                let days_limit = flex_val.value.into();
+                debug!("PARSED days_limit: {:?}", days_limit);
+
+                Deal {
+                    deal_id,
+                    days_limit,
+                }
+            }
+        }
+    }
 }

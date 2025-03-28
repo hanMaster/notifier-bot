@@ -49,6 +49,15 @@ pub enum FlexibleType {
     Int(i64),
 }
 
+impl From<FlexibleType> for i32 {
+    fn from(value: FlexibleType) -> Self {
+        match value {
+            FlexibleType::Str(str_value) => str_value.parse().unwrap_or_default(),
+            FlexibleType::Int(int_value) => int_value as i32,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct Deal {
     pub deal_id: u64,

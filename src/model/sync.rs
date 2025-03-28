@@ -99,10 +99,8 @@ where
         for lead in leads {
             if saved_ids.contains(&lead.deal_id) {
                 saved_ids.retain(|i| *i != lead.deal_id);
-                if lead.days_limit != 30 {
-                    db.set_days_limit(amo_client.project(), lead.deal_id, lead.days_limit)
-                        .await?;
-                }
+                db.set_days_limit(amo_client.project(), lead.deal_id, lead.days_limit)
+                    .await?;
                 continue;
             }
             let mut profit_data = amo_client
@@ -128,7 +126,10 @@ async fn mark_as_transferred(remain_ids: Vec<u64>, bot: &Bot, db: &Db, project: 
                     if bot
                         .send_message(
                             admin_id,
-                            format!("Проект: {}, Дом №{}, к.{} ({}) передан!", r.project, r.house, r.object, r.object_type),
+                            format!(
+                                "Проект: {}, Дом №{}, к.{} ({}) передан!",
+                                r.project, r.house, r.object, r.object_type
+                            ),
                         )
                         .await
                         .is_err()

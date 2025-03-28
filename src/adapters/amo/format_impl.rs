@@ -48,26 +48,8 @@ impl AmoClient for AmoFormatClient {
                 })
             })
             .map(|l| {
-                let id = l.id;
                 let flex_val = l.custom_fields_values.iter().find(|v| v.field_id == 763077);
-
-                if let Some(custom_field) = flex_val {
-                    let flex_val = custom_field.values.first().unwrap().clone();
-                    let days_limit = if let Str(val) = flex_val.value {
-                        val.parse::<i32>().unwrap_or(30)
-                    } else {
-                        30
-                    };
-                    Deal {
-                        deal_id: id,
-                        days_limit,
-                    }
-                } else {
-                    Deal {
-                        deal_id: id,
-                        days_limit: 30,
-                    }
-                }
+                self.deal_with_days_limit(l.id, flex_val)
             })
             .collect::<Vec<_>>()
     }
