@@ -14,6 +14,7 @@ mod deadline_worker;
 mod error;
 mod model;
 mod worker;
+mod xlsx;
 
 #[tokio::main]
 async fn main() -> Result<()> {

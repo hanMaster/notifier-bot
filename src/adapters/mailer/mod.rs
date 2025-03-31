@@ -7,6 +7,7 @@ use data_types::DkpObjects;
 use log::info;
 use mail_send::mail_builder::MessageBuilder;
 use mail_send::SmtpClientBuilder;
+use crate::xlsx::Xlsx;
 
 pub mod data_types;
 
@@ -41,7 +42,7 @@ impl Email {
         let today = chrono::Local::now().format("%d.%m.%Y %H:%M");
         let header = format!("Новые объекты по ДКП на {today}");
         let tpl = DkpObjects::new(&header, content);
-        self.send(subject, tpl.render()?).await?;
+        self.send(subject, tpl.render()?, None).await?;
         Ok(())
     }
 
@@ -50,11 +51,27 @@ impl Email {
         let today = chrono::Local::now().format("%d.%m.%Y %H:%M");
         let header = format!("Дедлайн по передаче объектов на {today}");
         let tpl = DkpObjects::new(&header, deals);
-        self.send(subject, tpl.render()?).await?;
+        self.send(subject, tpl.render()?, None).await?;
         Ok(())
     }
 
-    pub async fn send(&self, subject: &str, payload: String) -> Result<()> {
+    pub async fn stat_notification(&self, deals: Vec<DealInfo>) -> Result<()> {
+        let subject = "Статистика по объектам ДКП";
+        let today = chrono::Local::now().format("%d.%m.%Y %H:%M");
+        let header =
+            format!("Агрегированная информация (статистика) по всем объектам ДКП на {today}");
+        let tpl = DkpObjects::new(&header, deals.clone());
+        let attach = Xlsx::create(deals)?;
+        self.send(subject, tpl.render()?, Some(attach)).await?;
+        Ok(())
+    }
+
+    pub async fn send(
+        &self,
+        subject: &str,
+        payload: String,
+        attach: Option<Vec<u8>>,
+    ) -> Result<()> {
         let username = config().LOGIN.clone();
         let secret = config().PASSWORD.clone();
 
@@ -66,11 +83,24 @@ impl Email {
             .connect()
             .await?;
 
-        let message = MessageBuilder::new()
-            .from(("ДКП бот", config().FROM.as_str()))
-            .to(self.receivers.clone())
-            .subject(subject)
-            .html_body(payload);
+        let message = if let Some(attach) = attach {
+            MessageBuilder::new()
+                .from(("ДКП бот", config().FROM.as_str()))
+                .to(self.receivers.clone())
+                .subject(subject)
+                .html_body(payload)
+                .attachment(
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    "report.xlsx",
+                    attach,
+                )
+        } else {
+            MessageBuilder::new()
+                .from(("ДКП бот", config().FROM.as_str()))
+                .to(self.receivers.clone())
+                .subject(subject)
+                .html_body(payload)
+        };
 
         mailer.send(message).await?;
         info!("Email sent");
@@ -88,7 +118,7 @@ mod test {
         let email = Email::new();
         let payload = "<div>Hello World</div>".to_owned();
         let subject = "Тестовое сообщение от бота";
-        let send_result = email.send(&subject, payload).await;
+        let send_result = email.send(&subject, payload, None).await;
 
         match send_result {
             Ok(_) => {

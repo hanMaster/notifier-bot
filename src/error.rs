@@ -18,10 +18,18 @@ pub enum Error {
     // -- Askama
     Tmpl(askama::Error),
     // -- Chrono
-    Time(chrono::OutOfRangeError)
+    Time(chrono::OutOfRangeError),
+    // -- Xlsx
+    Xlsx(rust_xlsxwriter::XlsxError)
 }
 
 // region:    ---From
+
+impl From<rust_xlsxwriter::XlsxError> for Error {
+    fn from(value: rust_xlsxwriter::XlsxError) -> Self {
+        Error::Xlsx(value)
+    }
+}
 
 impl From<chrono::OutOfRangeError> for Error {
     fn from(e: chrono::OutOfRangeError) -> Self {

@@ -4,7 +4,7 @@ use askama::Template;
 use std::ops::Add;
 use std::time::Duration;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DealInfo {
     pub project: String,
     pub house: i32,

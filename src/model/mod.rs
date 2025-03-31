@@ -7,6 +7,7 @@ use sqlx::{Sqlite, SqlitePool};
 pub mod deal;
 pub mod sync;
 pub mod deadline;
+pub mod stat;
 
 pub struct Db {
     pub db: SqlitePool,
