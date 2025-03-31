@@ -8,6 +8,7 @@ use teloxide::prelude::Requester;
 use teloxide::types::ChatId;
 use teloxide::Bot;
 use tokio::time::sleep;
+use crate::model::stat::send_stat;
 
 pub fn do_work(bot: Bot) {
     tokio::spawn(async move {
@@ -33,6 +34,18 @@ pub fn do_work(bot: Bot) {
                     .await
                     .expect("Unable to send message to admin");
 
+                // Stat
+                let results = send_stat().await;
+
+                if let Err(e) = results {
+                    let msg = format!("Unable to search for deadline: {}", e);
+                    error!("{msg}");
+                    bot.send_message(admin_id, msg)
+                        .await
+                        .expect("Unable to send message to admin");
+                }
+
+                // Deadline
                 let results = search_deadline().await;
 
                 if let Err(e) = results {

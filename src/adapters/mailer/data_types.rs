@@ -67,3 +67,42 @@ impl<'a> DkpObjects<'a> {
         Self { header, deals }
     }
 }
+
+#[derive(Template)]
+#[template(path = "stat_tmpl.html")]
+pub struct DkpStat<'a> {
+    header: &'a str,
+    format_apartments: usize,
+    format_storage_rooms: usize,
+    format_parking: usize,
+    city_apartments: usize,
+    city_storage_rooms: usize,
+}
+
+impl<'a> DkpStat<'a> {
+    pub fn new(
+        header: &'a str,
+        format_apartments: usize,
+        format_storage_rooms: usize,
+        format_parking: usize,
+        city_apartments: usize,
+        city_storage_rooms: usize,
+    ) -> Self {
+        Self {
+            header,
+            format_apartments,
+            format_storage_rooms,
+            format_parking,
+            city_apartments,
+            city_storage_rooms,
+        }
+    }
+}
+
+pub struct StatNumbers {
+    pub format_apartments: usize,
+    pub format_storage_rooms: usize,
+    pub format_parking: usize,
+    pub city_apartments: usize,
+    pub city_storage_rooms: usize,
+}

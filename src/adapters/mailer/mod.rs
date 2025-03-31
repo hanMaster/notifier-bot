@@ -1,13 +1,13 @@
-use crate::adapters::mailer::data_types::DealInfo;
+use crate::adapters::mailer::data_types::{DealInfo, DkpStat, StatNumbers};
 use crate::adapters::profit::DealForAdd;
 use crate::config::config;
+use crate::xlsx::Xlsx;
 use crate::Result;
 use askama::Template;
 use data_types::DkpObjects;
 use log::info;
 use mail_send::mail_builder::MessageBuilder;
 use mail_send::SmtpClientBuilder;
-use crate::xlsx::Xlsx;
 
 pub mod data_types;
 
@@ -50,19 +50,27 @@ impl Email {
         let subject = "Дедлайн по передаче объектов по ДКП";
         let today = chrono::Local::now().format("%d.%m.%Y %H:%M");
         let header = format!("Дедлайн по передаче объектов на {today}");
-        let tpl = DkpObjects::new(&header, deals);
-        self.send(subject, tpl.render()?, None).await?;
+        let tmpl = DkpObjects::new(&header, deals);
+        self.send(subject, tmpl.render()?, None).await?;
         Ok(())
     }
 
-    pub async fn stat_notification(&self, deals: Vec<DealInfo>) -> Result<()> {
+    pub async fn stat_notification(&self, deals: Vec<DealInfo>, s: StatNumbers) -> Result<()> {
         let subject = "Статистика по объектам ДКП";
         let today = chrono::Local::now().format("%d.%m.%Y %H:%M");
         let header =
             format!("Агрегированная информация (статистика) по всем объектам ДКП на {today}");
-        let tpl = DkpObjects::new(&header, deals.clone());
+
+        let tmpl = DkpStat::new(
+            &header,
+            s.format_apartments,
+            s.format_storage_rooms,
+            s.format_parking,
+            s.city_apartments,
+            s.city_storage_rooms,
+        );
         let attach = Xlsx::create(deals)?;
-        self.send(subject, tpl.render()?, Some(attach)).await?;
+        self.send(subject, tmpl.render()?, Some(attach)).await?;
         Ok(())
     }
 

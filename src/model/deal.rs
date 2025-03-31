@@ -8,7 +8,7 @@ use std::ops::Add;
 use std::time::Duration;
 
 #[allow(dead_code)]
-#[derive(FromRow)]
+#[derive(FromRow, Clone)]
 pub struct DealData {
     pub id: i32,
     pub deal_id: u64,
