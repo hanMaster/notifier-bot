@@ -1,13 +1,13 @@
+pub use crate::adapters::profit::data_types::deal::DealForAdd;
 use chrono::DateTime;
 use data_types::{auth::AuthResponse, profit_data::ProfitRecord};
 pub(crate) use error::{Error, Result};
 use log::debug;
 use reqwest::{Client, StatusCode};
 use serde_json::json;
-pub use crate::adapters::profit::data_types::deal::DealForAdd;
 
-mod error;
 mod data_types;
+mod error;
 
 pub struct ProfitbaseClient {
     pub account_id: &'static str,
@@ -16,7 +16,11 @@ pub struct ProfitbaseClient {
 }
 
 impl ProfitbaseClient {
-    pub fn new(account_id: &'static str, api_key: &'static str, project: &'static str,) -> ProfitbaseClient {
+    pub fn new(
+        account_id: &'static str,
+        api_key: &'static str,
+        project: &'static str,
+    ) -> ProfitbaseClient {
         Self {
             account_id,
             api_key,
@@ -37,15 +41,13 @@ impl ProfitbaseClient {
         });
 
         let url = format!("{}/authentication", self.base_url());
-        let client = Client::new()
-            .post(url)
-            .json(&payload);
+        let client = Client::new().post(url).json(&payload);
 
         let result = client.send().await?;
 
         match result.status() {
             StatusCode::OK => {
-                let token  = result.json::<AuthResponse>().await?.access_token;
+                let token = result.json::<AuthResponse>().await?.access_token;
                 Ok(token)
             }
             _ => {
@@ -57,7 +59,12 @@ impl ProfitbaseClient {
     }
 
     pub async fn get_profit_data(&self, deal_id: u64, token: &str) -> Result<DealForAdd> {
-        let url = format!("{}/property/deal/{}?access_token={}", self.base_url(), deal_id, token);
+        let url = format!(
+            "{}/property/deal/{}?access_token={}",
+            self.base_url(),
+            deal_id,
+            token
+        );
 
         debug!("fetching {}", url);
         let response = Client::new()
@@ -73,10 +80,11 @@ impl ProfitbaseClient {
             debug!("received: {:?}", data);
             if data.status == "success" {
                 let p = data.data.first().unwrap();
-                let object_type = if p.house_name.contains("Кладовк") {
-                    "Кладовки".to_string()
-                } else {
-                    "Квартиры".to_string()
+                let object_type = match p.property_type.as_str() {
+                    "property" => "Квартиры".to_string(),
+                    "pantry" => "Кладовки".to_string(),
+                    "parking" => "Машиноместо".to_string(),
+                    &_ => "".to_string(),
                 };
 
                 let house_parts = p.house_name.split('№').collect::<Vec<_>>();
@@ -92,8 +100,8 @@ impl ProfitbaseClient {
                     format!("{} +0000", p.sold_at).as_str(),
                     "%Y-%m-%d %H:%M %z",
                 )
-                    .unwrap_or(Default::default())
-                    .naive_local();
+                .unwrap_or(Default::default())
+                .naive_local();
                 let attrs = p.attributes.clone();
 
                 Ok(DealForAdd {
@@ -117,9 +125,9 @@ impl ProfitbaseClient {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use crate::bot_interface::PROJECTS;
     use crate::config::config;
-    use super::*;
     fn setup() -> ProfitbaseClient {
         let account_id = &config().PROF_CITY_ACCOUNT;
         let api_key = &config().PROF_CITY_API_KEY;

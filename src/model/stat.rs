@@ -13,24 +13,28 @@ pub async fn send_stat() -> Result<()> {
         .iter()
         .filter(|d| d.project == PROJECTS[1] && d.object_type == "Квартиры")
         .count();
-    let format_storage_rooms = d_cloned
+    let format_pantries = d_cloned
         .iter()
         .filter(|d| d.project == PROJECTS[1] && d.object_type == "Кладовки")
+        .count();
+    let format_parking = d_cloned
+        .iter()
+        .filter(|d| d.project == PROJECTS[1] && d.object_type == "Машиноместо")
         .count();
     let city_apartments = d_cloned
         .iter()
         .filter(|d| d.project == PROJECTS[0] && d.object_type == "Квартиры")
         .count();
-    let city_storage_rooms = d_cloned
+    let city_pantries = d_cloned
         .iter()
         .filter(|d| d.project == PROJECTS[0] && d.object_type == "Кладовки")
         .count();
     let stat_numbers: StatNumbers = StatNumbers {
         format_apartments,
-        format_storage_rooms,
-        format_parking: 0,
+        format_pantries,
+        format_parking,
         city_apartments,
-        city_storage_rooms,
+        city_pantries,
     };
 
     if !undone_deals.is_empty() {

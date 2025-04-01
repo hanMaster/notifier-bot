@@ -64,10 +64,10 @@ impl Email {
         let tmpl = DkpStat::new(
             &header,
             s.format_apartments,
-            s.format_storage_rooms,
+            s.format_pantries,
             s.format_parking,
             s.city_apartments,
-            s.city_storage_rooms,
+            s.city_pantries,
         );
         let attach = Xlsx::create(deals)?;
         self.send(subject, tmpl.render()?, Some(attach)).await?;

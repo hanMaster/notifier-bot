@@ -9,6 +9,8 @@ pub struct ProfitRecord {
 #[derive(Deserialize, Debug, Clone)]
 pub struct ProfitData {
     pub number: String,
+    #[serde(rename = "propertyType")]
+    pub property_type: String,
     #[serde(rename = "houseName")]
     pub house_name: String,
     pub attributes: Attrs,
