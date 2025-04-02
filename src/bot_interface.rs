@@ -90,7 +90,7 @@ fn make_kbd(step: i32) -> KeyboardMarkup {
     KeyboardMarkup::new(keyboard).resize_keyboard()
 }
 
-async fn make_house_kbd(project: &str, object_type: &str) -> KeyboardMarkup {
+async fn make_house_kbd(project: &str, object_type: &str) -> Option<KeyboardMarkup> {
     let mut keyboard: Vec<Vec<KeyboardButton>> = vec![];
 
     let labels = get_house_numbers(project, object_type).await;
@@ -106,7 +106,10 @@ async fn make_house_kbd(project: &str, object_type: &str) -> KeyboardMarkup {
         keyboard.push(row);
     }
 
-    KeyboardMarkup::new(keyboard).resize_keyboard()
+    match keyboard.len() > 0 {
+        true => Some(KeyboardMarkup::new(keyboard).resize_keyboard()),
+        false => None,
+    }
 }
 
 async fn sync_handler(bot: Bot, msg: Message) -> HandlerResult {
@@ -187,16 +190,25 @@ async fn receive_object_type(
     match msg.text() {
         Some(object_type) => {
             if OBJECT_TYPES.contains(&object_type) {
-                let keyboard = make_house_kbd(&project, object_type).await;
-                bot.send_message(msg.chat.id, "Выберите номер дома")
-                    .reply_markup(keyboard)
-                    .await?;
-                dialogue
-                    .update(State::ChooseHouseNumber {
-                        project,
-                        object_type: object_type.into(),
-                    })
-                    .await?;
+                let keyboard_option = make_house_kbd(&project, object_type).await;
+                match keyboard_option {
+                    Some(keyboard) => {
+                        bot.send_message(msg.chat.id, "Выберите номер дома")
+                            .reply_markup(keyboard)
+                            .await?;
+                        dialogue
+                            .update(State::ChooseHouseNumber {
+                                project,
+                                object_type: object_type.into(),
+                            })
+                            .await?;
+                    }
+                    None => {
+                        bot.send_message(msg.chat.id, "Объектов не обнаружено")
+                            .reply_markup(ReplyMarkup::KeyboardRemove(KeyboardRemove::new()))
+                            .await?;
+                    }
+                }
             } else {
                 bot.send_message(msg.chat.id, "Сделайте выбор кнопками")
                     .await?;
