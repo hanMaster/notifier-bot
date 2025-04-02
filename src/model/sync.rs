@@ -121,11 +121,11 @@ async fn mark_as_transferred(remain_ids: Vec<u64>, bot: &Bot, db: &Db, project: 
         info!("remain leads: {:?}", remain_ids);
         match db.mark_as_transferred(project, &remain_ids).await {
             Ok(rows) => {
-                let admin_id = ChatId(config().ADMIN_ID);
+                let group_id = ChatId(config().TG_GROUP_ID);
                 for r in rows {
                     if bot
                         .send_message(
-                            admin_id,
+                            group_id,
                             format!(
                                 "Проект: {}, Дом №{}, к.{} ({}) передан!",
                                 r.project, r.house, r.object, r.object_type
@@ -134,7 +134,7 @@ async fn mark_as_transferred(remain_ids: Vec<u64>, bot: &Bot, db: &Db, project: 
                         .await
                         .is_err()
                     {
-                        error!("Failed to send message to admin");
+                        error!("Failed to send message to group");
                     };
                 }
             }
