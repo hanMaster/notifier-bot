@@ -38,7 +38,7 @@ impl Email {
 
     pub async fn new_objects_notification(&self, deals: Vec<DealForAdd>) -> Result<()> {
         let subject = "Новые сделки по ДКП";
-        let content: Vec<DealInfo> = deals.iter().map(|d| d.into()).collect();
+        let content: Vec<DealInfo> = deals.iter().map(Into::into).collect();
         let today = chrono::Local::now().format("%d.%m.%Y %H:%M");
         let header = format!("Новые объекты по ДКП на {today}");
         let tpl = DkpObjects::new(&header, content);

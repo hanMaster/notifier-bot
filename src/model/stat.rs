@@ -8,7 +8,7 @@ pub async fn send_stat() -> Result<()> {
     let db = Db::new().await;
     let deals = db.get_all_undone_deals().await?;
     let d_cloned = deals.clone();
-    let undone_deals: Vec<DealInfo> = deals.into_iter().map(|d| d.into()).collect();
+    let undone_deals: Vec<DealInfo> = deals.into_iter().map(Into::into).collect();
     let format_apartments = d_cloned
         .iter()
         .filter(|d| d.project == PROJECTS[1] && d.object_type == "Квартиры")
