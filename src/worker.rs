@@ -1,12 +1,12 @@
 use crate::config::config;
 use crate::model::sync::sync;
 use cron::Schedule;
-use log::debug;
+use log::{debug, error, info};
 use sqlx::types::chrono::Local;
 use std::str::FromStr;
-use teloxide::prelude::Requester;
+use teloxide::prelude::{Message, Requester};
 use teloxide::types::ChatId;
-use teloxide::Bot;
+use teloxide::{Bot, RequestError};
 use tokio::time::sleep;
 
 pub fn do_work(bot: Bot) {
@@ -26,26 +26,37 @@ pub fn do_work(bot: Bot) {
                     "{}: запущена синхронизация",
                     Local::now().format("%d.%m.%Y %H:%M:%S")
                 );
-                debug!("{}", info);
+                info!("{}", info);
                 let admin_id = ChatId(config().ADMIN_ID);
-                bot.send_message(admin_id, info)
-                    .await
-                    .expect("Unable to send message to admin");
+                let res = bot.send_message(admin_id, info).await;
+                if res.is_err() {
+                    error!("Unable to send message to admin: {}", res.err().unwrap());
+                }
 
                 let results = sync(&bot).await;
                 for res in results {
                     match res {
                         Ok(data) => {
                             for r in data {
-                                bot.send_message(ChatId(config().TG_GROUP_ID), r.to_string())
-                                    .await
-                                    .expect("Unable to send message in group");
+                                let res = bot
+                                    .send_message(ChatId(config().TG_GROUP_ID), r.to_string())
+                                    .await;
+                                if res.is_err() {
+                                    error!(
+                                        "Unable to send message to group: {}",
+                                        res.err().unwrap()
+                                    );
+                                }
                             }
                         }
                         Err(e) => {
-                            bot.send_message(admin_id, e.to_string())
-                                .await
-                                .expect("Unable to send message to admin");
+                            let res = bot.send_message(admin_id, e.to_string()).await;
+                            if res.is_err() {
+                                error!(
+                                    "Unable to send sync error to admin: {}",
+                                    res.err().unwrap()
+                                );
+                            }
                         }
                     }
                 }
