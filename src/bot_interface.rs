@@ -106,9 +106,9 @@ async fn make_house_kbd(project: &str, object_type: &str) -> Option<KeyboardMark
         keyboard.push(row);
     }
 
-    match keyboard.len() > 0 {
-        true => Some(KeyboardMarkup::new(keyboard).resize_keyboard()),
-        false => None,
+    match keyboard.is_empty() {
+        true => None,
+        false => Some(KeyboardMarkup::new(keyboard).resize_keyboard()),
     }
 }
 

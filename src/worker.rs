@@ -4,9 +4,9 @@ use cron::Schedule;
 use log::{debug, error, info};
 use sqlx::types::chrono::Local;
 use std::str::FromStr;
-use teloxide::prelude::{Message, Requester};
+use teloxide::prelude::Requester;
 use teloxide::types::ChatId;
-use teloxide::{Bot, RequestError};
+use teloxide::Bot;
 use tokio::time::sleep;
 
 pub fn do_work(bot: Bot) {
