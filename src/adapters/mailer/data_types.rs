@@ -1,5 +1,5 @@
 use crate::adapters::profit::DealForAdd;
-use crate::model::deal::DealData;
+use crate::model::deal::{get_object_type, DealData};
 use askama::Template;
 use std::ops::Add;
 use std::time::Duration;
@@ -26,7 +26,7 @@ impl From<&DealForAdd> for DealInfo {
         Self {
             project: value.project.clone(),
             house: value.house,
-            object_type: value.object_type.clone(),
+            object_type: get_object_type(value.object_type.as_str()).to_string(),
             object: value.object,
             facing: value.facing.clone(),
             reg_date,
@@ -46,7 +46,7 @@ impl From<DealData> for DealInfo {
         Self {
             project: value.project.clone(),
             house: value.house,
-            object_type: value.object_type.clone(),
+            object_type: get_object_type(value.object_type.as_str()).to_string(),
             object: value.object,
             facing: value.facing.clone(),
             reg_date,

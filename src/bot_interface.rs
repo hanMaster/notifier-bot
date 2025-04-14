@@ -1,6 +1,7 @@
 use crate::config::config;
 use crate::model::deal::{get_house_numbers, get_object_numbers, prepare_response};
 use crate::model::sync::sync;
+use crate::model::Db;
 use log::info;
 use std::error::Error;
 use teloxide::dispatching::dialogue::InMemStorage;
@@ -14,7 +15,7 @@ type HandlerResult = Result<(), Box<dyn Error + Send + Sync>>;
 type MyDialogue = Dialogue<State, InMemStorage<State>>;
 
 pub const PROJECTS: [&str; 2] = ["DNS Сити", "ЖК Формат"];
-const OBJECT_TYPES: [&str; 2] = ["Квартиры", "Кладовки"];
+const OBJECT_TYPES: [&str; 3] = ["Квартиры", "Кладовки", "Машиноместа"];
 #[derive(Clone, Default)]
 pub enum State {
     #[default]
@@ -41,6 +42,8 @@ pub enum BotCommand {
     Start,
     /// Запрос данных в AmoCRM
     Sync,
+    /// Rename object type
+    Rename,
 }
 
 pub fn bot_handler() -> Handler<'static, DependencyMap, HandlerResult, DpHandlerDescription> {
@@ -49,7 +52,8 @@ pub fn bot_handler() -> Handler<'static, DependencyMap, HandlerResult, DpHandler
             Update::filter_message()
                 .filter_command::<BotCommand>()
                 .branch(case![BotCommand::Sync].endpoint(sync_handler))
-                .branch(case![BotCommand::Start].endpoint(start)),
+                .branch(case![BotCommand::Start].endpoint(start))
+                .branch(case![BotCommand::Rename].endpoint(rename_object_types)),
         )
         .branch(
             Update::filter_message()
@@ -76,7 +80,11 @@ pub fn bot_handler() -> Handler<'static, DependencyMap, HandlerResult, DpHandler
 fn make_kbd(step: i32) -> KeyboardMarkup {
     let mut keyboard: Vec<Vec<KeyboardButton>> = vec![];
 
-    let labels = if step == 1 { PROJECTS } else { OBJECT_TYPES };
+    let labels: Vec<&str> = if step == 1 {
+        PROJECTS.to_vec()
+    } else {
+        OBJECT_TYPES.to_vec()
+    };
 
     for label in labels.chunks(2) {
         let row = label
@@ -138,6 +146,22 @@ async fn sync_handler(bot: Bot, msg: Message) -> HandlerResult {
             .await?;
     }
 
+    Ok(())
+}
+
+async fn rename_object_types(bot: Bot, msg: Message) -> HandlerResult {
+    let db = Db::new().await;
+    let res = db.rename_objects().await;
+    match res {
+        Ok(_) => {
+            bot.send_message(msg.chat.id, "Ok".to_string()).await?;
+        }
+
+        Err(e) => {
+            let admin_id = ChatId(config().ADMIN_ID);
+            bot.send_message(admin_id, e.to_string()).await?;
+        }
+    }
     Ok(())
 }
 

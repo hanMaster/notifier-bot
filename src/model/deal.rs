@@ -40,6 +40,17 @@ impl Db {
         Ok(records)
     }
 
+    pub async fn rename_objects(&self) -> Result<()> {
+        let query = r#" UPDATE deal SET object_type = 'pantry' WHERE object_type = 'Кладовки' "#;
+        sqlx::query(&query).execute(&self.db).await?;
+        let query = r#" UPDATE deal SET object_type = 'property' WHERE object_type = 'Квартиры' "#;
+        sqlx::query(&query).execute(&self.db).await?;
+        let query = r#" UPDATE deal SET object_type = 'parking' WHERE object_type = 'Машиноместо' "#;
+        sqlx::query(&query).execute(&self.db).await?;
+
+        Ok(())
+    }
+
     pub async fn list_house_numbers(&self, project: &str, object_type: &str) -> Result<Vec<i32>> {
         let records: Vec<HouseNumbers> = sqlx::query_as(
             r#"SELECT DISTINCT house
@@ -49,10 +60,10 @@ impl Db {
                       AND transfer_completed = false
                     ORDER BY house "#,
         )
-        .bind(project)
-        .bind(object_type)
-        .fetch_all(&self.db)
-        .await?;
+            .bind(project)
+            .bind(object_type)
+            .fetch_all(&self.db)
+            .await?;
         debug!("[list_house_numbers] {:#?}", records);
         let res = records.iter().map(|r| r.house).collect();
         Ok(res)
@@ -73,11 +84,11 @@ impl Db {
               AND transfer_completed = false
             ORDER BY object "#,
         )
-        .bind(project)
-        .bind(object_type)
-        .bind(house)
-        .fetch_all(&self.db)
-        .await?;
+            .bind(project)
+            .bind(object_type)
+            .bind(house)
+            .fetch_all(&self.db)
+            .await?;
         let res = records.iter().map(|r| r.object).collect();
         Ok(res)
     }
@@ -115,10 +126,10 @@ impl Db {
                 UPDATE deal SET transfer_completed = true
                             WHERE project = $1 AND deal.deal_id = $2"#,
             )
-            .bind(project)
-            .bind(*id as i64)
-            .execute(&self.db)
-            .await?;
+                .bind(project)
+                .bind(*id as i64)
+                .execute(&self.db)
+                .await?;
             info!("{:?}", res);
         }
 
@@ -152,11 +163,11 @@ impl Db {
                 UPDATE deal SET days_limit = $1
                             WHERE project = $2 AND deal_id = $3"#,
             )
-            .bind(days_limit)
-            .bind(project)
-            .bind(deal_id as i64)
-            .execute(&self.db)
-            .await?;
+                .bind(days_limit)
+                .bind(project)
+                .bind(deal_id as i64)
+                .execute(&self.db)
+                .await?;
             info!("{:?}", res);
         }
         Ok(())
@@ -187,19 +198,20 @@ impl Db {
                        AND house = $3
                        AND object = $4 "#,
         )
-        .bind(project)
-        .bind(object_type)
-        .bind(house)
-        .bind(number)
-        .fetch_one(&self.db)
-        .await?;
+            .bind(project)
+            .bind(object_type)
+            .bind(house)
+            .bind(number)
+            .fetch_one(&self.db)
+            .await?;
         Ok(rows)
     }
 }
 
 pub async fn get_house_numbers(project: &str, object_type: &str) -> Vec<i32> {
     let db = Db::new().await;
-    let res = db.list_house_numbers(project, object_type).await;
+    let profit_type = get_profitbase_type(object_type);
+    let res = db.list_house_numbers(project, profit_type).await;
     res.unwrap_or_else(|e| {
         error!("[get_house_numbers] {:?}", e);
         vec![]
@@ -208,29 +220,50 @@ pub async fn get_house_numbers(project: &str, object_type: &str) -> Vec<i32> {
 
 pub async fn get_object_numbers(project: &str, object_type: &str, house: i32) -> Vec<i32> {
     let db = Db::new().await;
-    let res = db.list_numbers(project, object_type, house).await;
+    let profit_type = get_profitbase_type(object_type);
+    let res = db.list_numbers(project, profit_type, house).await;
     res.unwrap_or_else(|e| {
         error!("[get_object_numbers] {:?}", e);
         vec![]
     })
 }
 
+pub fn get_object_type(profitbase_type: &str) -> &'static str {
+    match profitbase_type {
+        "property" => "Квартира",
+        "pantry" => "Кладовка",
+        "parking" => "Машиноместо",
+        _ => ""
+    }
+}
+
+pub fn get_profitbase_type(object_type: &str) -> &'static str {
+    match object_type {
+        "Квартиры" => "property",
+        "Кладовки" => "pantry",
+        "Машиноместа" => "parking",
+        _ => ""
+    }
+}
+
 pub async fn prepare_response(project: &str, object_type: &str, house: i32, number: i32) -> String {
     let db = Db::new().await;
-    let result = db.get_deal(project, object_type, house, number).await;
+    let profit_type = get_profitbase_type(object_type);
+    let result = db.get_deal(project, profit_type, house, number).await;
 
     match result {
         Ok(b) => {
-            let facing = if b.object_type.eq("Квартиры") {
+            let facing = if b.object_type.eq("property") {
                 format!("Тип отделки: {}\n", b.facing)
             } else {
                 "".to_string()
             };
+
             let res = format!(
                 "Проект: {}\nДом № {}\nТип объекта: {}\n№ {}\n{}Дата регистрации: {}\nПередать объект до: {}\n",
                 b.project,
                 b.house,
-                b.object_type,
+                get_object_type(b.object_type.as_str()),
                 b.object,
                 facing,
                 b.created_on.format("%d.%m.%Y"),

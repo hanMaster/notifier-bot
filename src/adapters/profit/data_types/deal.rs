@@ -1,3 +1,4 @@
+use crate::model::deal::get_object_type;
 use chrono::NaiveDateTime;
 use std::fmt::{Display, Formatter};
 use std::ops::Add;
@@ -17,7 +18,7 @@ pub struct DealForAdd {
 
 impl Display for DealForAdd {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let facing = if self.object_type.eq("Квартиры") {
+        let facing = if self.object_type.eq("property") {
             format!("Тип отделки: {}\n", self.facing)
         } else {
             "".to_string()
@@ -27,7 +28,7 @@ impl Display for DealForAdd {
             "Проект: {}\nДом № {}\nТип объекта: {}\n№ {}\n{}Дата регистрации: {}\nПередать объект до: {}\n",
             self.project,
             self.house,
-            self.object_type,
+            get_object_type(self.object_type.as_str()),
             self.object,
             facing,
             self.created_on.format("%d.%m.%Y"),
