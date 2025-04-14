@@ -1,7 +1,6 @@
 use crate::config::config;
 use crate::model::deal::{get_house_numbers, get_object_numbers, prepare_response};
 use crate::model::sync::sync;
-use crate::model::Db;
 use log::info;
 use std::error::Error;
 use teloxide::dispatching::dialogue::InMemStorage;
@@ -42,8 +41,6 @@ pub enum BotCommand {
     Start,
     /// Запрос данных в AmoCRM
     Sync,
-    /// Rename object type
-    Rename,
 }
 
 pub fn bot_handler() -> Handler<'static, DependencyMap, HandlerResult, DpHandlerDescription> {
@@ -52,8 +49,7 @@ pub fn bot_handler() -> Handler<'static, DependencyMap, HandlerResult, DpHandler
             Update::filter_message()
                 .filter_command::<BotCommand>()
                 .branch(case![BotCommand::Sync].endpoint(sync_handler))
-                .branch(case![BotCommand::Start].endpoint(start))
-                .branch(case![BotCommand::Rename].endpoint(rename_object_types)),
+                .branch(case![BotCommand::Start].endpoint(start)),
         )
         .branch(
             Update::filter_message()
@@ -146,22 +142,6 @@ async fn sync_handler(bot: Bot, msg: Message) -> HandlerResult {
             .await?;
     }
 
-    Ok(())
-}
-
-async fn rename_object_types(bot: Bot, msg: Message) -> HandlerResult {
-    let db = Db::new().await;
-    let res = db.rename_objects().await;
-    match res {
-        Ok(_) => {
-            bot.send_message(msg.chat.id, "Ok".to_string()).await?;
-        }
-
-        Err(e) => {
-            let admin_id = ChatId(config().ADMIN_ID);
-            bot.send_message(admin_id, e.to_string()).await?;
-        }
-    }
     Ok(())
 }
 

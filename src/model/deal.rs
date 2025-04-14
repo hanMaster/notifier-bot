@@ -40,17 +40,6 @@ impl Db {
         Ok(records)
     }
 
-    pub async fn rename_objects(&self) -> Result<()> {
-        let query = r#" UPDATE deal SET object_type = 'pantry' WHERE object_type = 'Кладовки' "#;
-        sqlx::query(&query).execute(&self.db).await?;
-        let query = r#" UPDATE deal SET object_type = 'property' WHERE object_type = 'Квартиры' "#;
-        sqlx::query(&query).execute(&self.db).await?;
-        let query = r#" UPDATE deal SET object_type = 'parking' WHERE object_type = 'Машиноместо' "#;
-        sqlx::query(&query).execute(&self.db).await?;
-
-        Ok(())
-    }
-
     pub async fn list_house_numbers(&self, project: &str, object_type: &str) -> Result<Vec<i32>> {
         let records: Vec<HouseNumbers> = sqlx::query_as(
             r#"SELECT DISTINCT house
