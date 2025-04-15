@@ -11,6 +11,7 @@ use crate::config::config;
 use std::sync::Arc;
 use teloxide::prelude::{ChatId, Requester};
 use teloxide::Bot;
+use crate::model::deal::get_object_type;
 
 pub async fn sync(bot: &Bot) -> Vec<Result<Vec<DealForAdd>>> {
     let mut results: Vec<Result<Vec<DealForAdd>>> = vec![];
@@ -128,7 +129,7 @@ async fn mark_as_transferred(remain_ids: Vec<u64>, bot: &Bot, db: &Db, project: 
                             group_id,
                             format!(
                                 "Проект: {}, Дом №{}, к.{} ({}) передан!",
-                                r.project, r.house, r.object, r.object_type
+                                r.project, r.house, r.object, get_object_type(&r.object_type)
                             ),
                         )
                         .await
