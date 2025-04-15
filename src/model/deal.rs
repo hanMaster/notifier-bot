@@ -199,7 +199,7 @@ impl Db {
 
 pub async fn get_house_numbers(project: &str, object_type: &str) -> Vec<i32> {
     let db = Db::new().await;
-    let profit_type = get_profitbase_type(object_type);
+    let profit_type = get_en_object_type(object_type);
     let res = db.list_house_numbers(project, profit_type).await;
     res.unwrap_or_else(|e| {
         error!("[get_house_numbers] {:?}", e);
@@ -209,7 +209,7 @@ pub async fn get_house_numbers(project: &str, object_type: &str) -> Vec<i32> {
 
 pub async fn get_object_numbers(project: &str, object_type: &str, house: i32) -> Vec<i32> {
     let db = Db::new().await;
-    let profit_type = get_profitbase_type(object_type);
+    let profit_type = get_en_object_type(object_type);
     let res = db.list_numbers(project, profit_type, house).await;
     res.unwrap_or_else(|e| {
         error!("[get_object_numbers] {:?}", e);
@@ -217,7 +217,7 @@ pub async fn get_object_numbers(project: &str, object_type: &str, house: i32) ->
     })
 }
 
-pub fn get_object_type(profitbase_type: &str) -> &'static str {
+pub fn get_ru_object_type(profitbase_type: &str) -> &'static str {
     match profitbase_type {
         "property" => "Квартира",
         "pantry" => "Кладовка",
@@ -226,7 +226,7 @@ pub fn get_object_type(profitbase_type: &str) -> &'static str {
     }
 }
 
-pub fn get_profitbase_type(object_type: &str) -> &'static str {
+pub fn get_en_object_type(object_type: &str) -> &'static str {
     match object_type {
         "Квартиры" => "property",
         "Кладовки" => "pantry",
@@ -237,7 +237,7 @@ pub fn get_profitbase_type(object_type: &str) -> &'static str {
 
 pub async fn prepare_response(project: &str, object_type: &str, house: i32, number: i32) -> String {
     let db = Db::new().await;
-    let profit_type = get_profitbase_type(object_type);
+    let profit_type = get_en_object_type(object_type);
     let result = db.get_deal(project, profit_type, house, number).await;
 
     match result {
@@ -252,7 +252,7 @@ pub async fn prepare_response(project: &str, object_type: &str, house: i32, numb
                 "Проект: {}\nДом № {}\nТип объекта: {}\n№ {}\n{}Дата регистрации: {}\nПередать объект до: {}\n",
                 b.project,
                 b.house,
-                get_object_type(b.object_type.as_str()),
+                get_ru_object_type(b.object_type.as_str()),
                 b.object,
                 facing,
                 b.created_on.format("%d.%m.%Y"),

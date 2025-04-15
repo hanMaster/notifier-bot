@@ -1,4 +1,4 @@
-use crate::model::deal::get_object_type;
+use crate::model::deal::get_ru_object_type;
 use chrono::NaiveDateTime;
 use std::fmt::{Display, Formatter};
 use std::ops::Add;
@@ -28,7 +28,7 @@ impl Display for DealForAdd {
             "Проект: {}\nДом № {}\nТип объекта: {}\n№ {}\n{}Дата регистрации: {}\nПередать объект до: {}\n",
             self.project,
             self.house,
-            get_object_type(self.object_type.as_str()),
+            get_ru_object_type(self.object_type.as_str()),
             self.object,
             facing,
             self.created_on.format("%d.%m.%Y"),
