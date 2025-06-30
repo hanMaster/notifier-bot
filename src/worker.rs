@@ -38,8 +38,9 @@ pub fn do_work(bot: Bot) {
                     match res {
                         Ok(data) => {
                             for r in data {
+                                let msg = format!("Новая продажа!:\n{}", r.to_string());
                                 let res = bot
-                                    .send_message(ChatId(config().TG_GROUP_ID), r.to_string())
+                                    .send_message(ChatId(config().TG_GROUP_ID), msg)
                                     .await;
                                 if res.is_err() {
                                     error!(
