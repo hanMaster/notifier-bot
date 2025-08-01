@@ -89,9 +89,20 @@ impl ProfitbaseClient {
                 };
                 let house = house.parse::<i32>().unwrap_or(-1);
 
+                let sold_opt = p.sold_at.clone();
+                if sold_opt.is_none() {
+                    let msg = format!(
+                        "Failed to parse dealId: {deal_id}, {}, house: {house}, type: {}, № {}",
+                        self.project, p.property_type, p.number
+                    );
+                    return Err(Error::ProfitGetDataFailed(msg));
+                }
+
+                let sold_at = sold_opt.unwrap();
+
                 // soldAt
                 let created_on = DateTime::parse_from_str(
-                    format!("{} +0000", p.sold_at).as_str(),
+                    format!("{} +0000", sold_at).as_str(),
                     "%Y-%m-%d %H:%M %z",
                 )
                 .unwrap_or(Default::default())
