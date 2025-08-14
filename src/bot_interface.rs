@@ -43,7 +43,7 @@ pub enum BotCommand {
     Sync,
 }
 
-pub fn bot_handler() -> Handler<'static, DependencyMap, HandlerResult, DpHandlerDescription> {
+pub fn bot_handler() -> Handler<'static, HandlerResult, DpHandlerDescription> {
     dialogue::enter::<Update, InMemStorage<State>, State, _>()
         .branch(
             Update::filter_message()
