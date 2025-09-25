@@ -134,37 +134,28 @@ impl Db {
     }
 
     pub async fn set_days_limit(&self, project: &str, deal_id: u64, days_limit: i32) -> Result<()> {
-        let deal: DealData =
-            sqlx::query_as("SELECT * FROM deal WHERE project = $1 AND deal_id = $2")
-                .bind(project)
-                .bind(deal_id as i64)
-                .fetch_one(&self.db)
-                .await?;
-
-        if deal.days_limit != days_limit {
-            info!("[set_days_limit] project: {project}, deal_id: {deal_id}, limit: {days_limit}");
-            let res = sqlx::query(
-                r#"
+        info!("[set_days_limit] project: {project}, deal_id: {deal_id}, limit: {days_limit}");
+        let res = sqlx::query(
+            r#"
                 UPDATE deal SET days_limit = $1
                             WHERE project = $2 AND deal_id = $3"#,
-            )
-            .bind(days_limit)
-            .bind(project)
-            .bind(deal_id as i64)
-            .execute(&self.db)
-            .await?;
-            info!("[set_days_limit] update result: {:?}", res);
-        }
+        )
+        .bind(days_limit)
+        .bind(project)
+        .bind(deal_id as i64)
+        .execute(&self.db)
+        .await?;
+        info!("[set_days_limit] update result: {:?}", res);
         Ok(())
     }
 
-    pub async fn read_deal_ids_by_project(&self, project: &str) -> Result<Vec<u64>> {
+    pub async fn read_deal_ids_by_project(&self, project: &str) -> Result<Vec<(u64, i32)>> {
         let records: Vec<DealData> =
             sqlx::query_as("SELECT * FROM deal WHERE project = $1 AND transfer_completed = false")
                 .bind(project)
                 .fetch_all(&self.db)
                 .await?;
-        let res = records.iter().map(|r| r.deal_id).collect();
+        let res = records.iter().map(|r| (r.deal_id, r.days_limit)).collect();
         Ok(res)
     }
 
