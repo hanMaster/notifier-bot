@@ -1,4 +1,4 @@
-use crate::adapters::amo::AmoClient;
+use crate::adapters::amo::{AmoClient, Funnel};
 use crate::model::Db;
 use crate::Result;
 use log::{debug, error, info};
@@ -64,7 +64,7 @@ where
                 .collect::<Vec<_>>();
             let mut res = vec![];
             for funnel in filtered {
-                res.push(sync_funnel(amo.clone(), &db, &mut saved_ids_limits, funnel.id).await)
+                res.push(sync_funnel(amo.clone(), &db, &mut saved_ids_limits, funnel).await)
             }
             mark_as_transferred(saved_ids_limits, bot, &db, amo.project()).await;
             res
@@ -80,13 +80,13 @@ async fn sync_funnel<A>(
     amo_client: Arc<A>,
     db: &Db,
     saved_ids_limits: &mut Vec<(u64, i32)>,
-    funnel_id: i64,
+    funnel: &Funnel,
 ) -> Result<Vec<DealForAdd>>
 where
     A: AmoClient + Send + Sync + 'static,
 {
-    info!("Syncing {} funnel {}", amo_client.project(), funnel_id);
-    let leads = amo_client.get_funnel_leads(funnel_id).await?;
+    info!("Syncing {} funnel {}", amo_client.project(), funnel.name);
+    let leads = amo_client.get_funnel_leads(funnel.id).await?;
 
     info!(
         "leads: {:?}",

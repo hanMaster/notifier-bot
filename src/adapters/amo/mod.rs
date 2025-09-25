@@ -1,6 +1,6 @@
 use log::debug;
 use crate::adapters::amo::data_types::leads::{CustomField, Deal, Leads};
-use crate::adapters::amo::data_types::pipeline::{Funnel, Pipeline};
+pub use crate::adapters::amo::data_types::pipeline::{Funnel, Pipeline};
 pub(crate) use crate::adapters::amo::error::{Error, Result};
 use crate::adapters::profit::ProfitbaseClient;
 use crate::bot_interface::PROJECTS;
