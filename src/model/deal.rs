@@ -49,10 +49,10 @@ impl Db {
                       AND transfer_completed = false
                     ORDER BY house "#,
         )
-            .bind(project)
-            .bind(object_type)
-            .fetch_all(&self.db)
-            .await?;
+        .bind(project)
+        .bind(object_type)
+        .fetch_all(&self.db)
+        .await?;
         debug!("[list_house_numbers] {:#?}", records);
         let res = records.iter().map(|r| r.house).collect();
         Ok(res)
@@ -73,11 +73,11 @@ impl Db {
               AND transfer_completed = false
             ORDER BY object "#,
         )
-            .bind(project)
-            .bind(object_type)
-            .bind(house)
-            .fetch_all(&self.db)
-            .await?;
+        .bind(project)
+        .bind(object_type)
+        .bind(house)
+        .fetch_all(&self.db)
+        .await?;
         let res = records.iter().map(|r| r.object).collect();
         Ok(res)
     }
@@ -115,10 +115,10 @@ impl Db {
                 UPDATE deal SET transfer_completed = true
                             WHERE project = $1 AND deal.deal_id = $2"#,
             )
-                .bind(project)
-                .bind(*id as i64)
-                .execute(&self.db)
-                .await?;
+            .bind(project)
+            .bind(*id as i64)
+            .execute(&self.db)
+            .await?;
             info!("{:?}", res);
         }
 
@@ -134,11 +134,6 @@ impl Db {
     }
 
     pub async fn set_days_limit(&self, project: &str, deal_id: u64, days_limit: i32) -> Result<()> {
-        info!(
-            "[set_days_limit] project: {}, deal_id: {:?}",
-            project, deal_id
-        );
-
         let deal: DealData =
             sqlx::query_as("SELECT * FROM deal WHERE project = $1 AND deal_id = $2")
                 .bind(project)
@@ -147,17 +142,18 @@ impl Db {
                 .await?;
 
         if deal.days_limit != days_limit {
+            info!("[set_days_limit] project: {project}, deal_id: {deal_id}, limit: {days_limit}");
             let res = sqlx::query(
                 r#"
                 UPDATE deal SET days_limit = $1
                             WHERE project = $2 AND deal_id = $3"#,
             )
-                .bind(days_limit)
-                .bind(project)
-                .bind(deal_id as i64)
-                .execute(&self.db)
-                .await?;
-            info!("{:?}", res);
+            .bind(days_limit)
+            .bind(project)
+            .bind(deal_id as i64)
+            .execute(&self.db)
+            .await?;
+            info!("[set_days_limit] update result: {:?}", res);
         }
         Ok(())
     }
@@ -187,12 +183,12 @@ impl Db {
                        AND house = $3
                        AND object = $4 "#,
         )
-            .bind(project)
-            .bind(object_type)
-            .bind(house)
-            .bind(number)
-            .fetch_one(&self.db)
-            .await?;
+        .bind(project)
+        .bind(object_type)
+        .bind(house)
+        .bind(number)
+        .fetch_one(&self.db)
+        .await?;
         Ok(rows)
     }
 }
@@ -222,7 +218,7 @@ pub fn get_ru_object_type(profitbase_type: &str) -> &'static str {
         "property" => "Квартира",
         "pantry" => "Кладовка",
         "parking" => "Машиноместо",
-        _ => ""
+        _ => "",
     }
 }
 
@@ -231,7 +227,7 @@ pub fn get_en_object_type(object_type: &str) -> &'static str {
         "Квартиры" => "property",
         "Кладовки" => "pantry",
         "Машиноместа" => "parking",
-        _ => ""
+        _ => "",
     }
 }
 

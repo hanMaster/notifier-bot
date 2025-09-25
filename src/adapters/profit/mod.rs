@@ -66,7 +66,7 @@ impl ProfitbaseClient {
             token
         );
 
-        debug!("fetching {}", url);
+        debug!("[get_profit_data] fetching {}", url);
         let response = Client::new()
             .get(url)
             .header("Content-Type", "application/json")
@@ -74,10 +74,10 @@ impl ProfitbaseClient {
             .await?;
 
         if response.status() == StatusCode::OK {
-            debug!("JSON parse");
+            debug!("[get_profit_data] JSON parse");
             let data = response.json::<ProfitRecord>().await?;
 
-            debug!("received: {:?}", data);
+            debug!("[get_profit_data] received: {:?}", data);
             if data.status == "success" {
                 let p = data.data.first().unwrap();
 
