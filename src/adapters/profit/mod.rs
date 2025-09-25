@@ -50,10 +50,11 @@ impl ProfitbaseClient {
                 let token = result.json::<AuthResponse>().await?.access_token;
                 Ok(token)
             }
-            _ => {
+            status => {
                 let err = result.text().await?;
-                eprintln!("Failed to get token: {err}");
-                Err(Error::ProfitAuthFailed(err))
+                let err_msg = format!("Failed to get token, status: {}, msg: {err}", status);
+                eprintln!("{err_msg}");
+                Err(Error::ProfitAuthFailed(err_msg))
             }
         }
     }
