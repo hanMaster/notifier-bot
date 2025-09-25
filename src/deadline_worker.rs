@@ -38,7 +38,7 @@ pub fn do_work(bot: Bot) {
                 let results = send_stat().await;
 
                 if let Err(e) = results {
-                    let msg = format!("Unable to search for deadline: {}", e);
+                    let msg = format!("Failed to send in_work stat on email: {}", e);
                     error!("{msg}");
                     bot.send_message(admin_id, msg)
                         .await
@@ -49,7 +49,7 @@ pub fn do_work(bot: Bot) {
                 let results = search_deadline().await;
 
                 if let Err(e) = results {
-                    let msg = format!("Unable to search for deadline: {}", e);
+                    let msg = format!("Failed to send deadline stat on email: {}", e);
                     error!("{msg}");
                     bot.send_message(admin_id, msg)
                         .await
