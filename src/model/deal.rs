@@ -119,18 +119,22 @@ impl Db {
             .bind(*id as i64)
             .execute(&self.db)
             .await?;
-            info!("{:?}", res);
+            debug!("{:?}", res);
         }
 
-        let done_objects: Vec<DealData> =
-            sqlx::query_as("SELECT * FROM deal WHERE transfer_completed = true")
-                .fetch_all(&self.db)
-                .await?;
-        let filtered: Vec<DealData> = done_objects
-            .into_iter()
-            .filter(|o| ids.contains(&o.deal_id))
-            .collect();
-        Ok(filtered)
+        let ids_str = ids
+            .iter()
+            .map(ToString::to_string)
+            .collect::<Vec<_>>()
+            .join(", ");
+
+        let query = format!(
+            "SELECT * FROM deal WHERE transfer_completed = true AND deal_id in ({ids_str})"
+        );
+
+        let done_objects: Vec<DealData> = sqlx::query_as(&query).fetch_all(&self.db).await?;
+
+        Ok(done_objects)
     }
 
     pub async fn set_days_limit(&self, project: &str, deal_id: u64, days_limit: i32) -> Result<()> {
