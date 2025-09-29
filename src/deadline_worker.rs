@@ -1,14 +1,13 @@
 use crate::config::config;
 use crate::model::deadline::search_deadline;
+use crate::model::stat::send_stat;
+use crate::sender::send_msg_to_admin;
 use cron::Schedule;
 use log::{debug, error};
 use sqlx::types::chrono::Local;
 use std::str::FromStr;
-use teloxide::prelude::Requester;
-use teloxide::types::ChatId;
 use teloxide::Bot;
 use tokio::time::sleep;
-use crate::model::stat::send_stat;
 
 pub fn do_work(bot: Bot) {
     tokio::spawn(async move {
@@ -29,10 +28,7 @@ pub fn do_work(bot: Bot) {
                     Local::now().format("%d.%m.%Y %H:%M:%S")
                 );
                 debug!("{}", info);
-                let admin_id = ChatId(config().ADMIN_ID);
-                bot.send_message(admin_id, info)
-                    .await
-                    .expect("Unable to send message to admin");
+                send_msg_to_admin(&bot, &info).await;
 
                 // Stat
                 let results = send_stat().await;
@@ -40,9 +36,7 @@ pub fn do_work(bot: Bot) {
                 if let Err(e) = results {
                     let msg = format!("Failed to send in_work stat on email: {}", e);
                     error!("{msg}");
-                    bot.send_message(admin_id, msg)
-                        .await
-                        .expect("Unable to send message to admin");
+                    send_msg_to_admin(&bot, &msg).await;
                 }
 
                 // Deadline
@@ -51,9 +45,7 @@ pub fn do_work(bot: Bot) {
                 if let Err(e) = results {
                     let msg = format!("Failed to send deadline stat on email: {}", e);
                     error!("{msg}");
-                    bot.send_message(admin_id, msg)
-                        .await
-                        .expect("Unable to send message to admin");
+                    send_msg_to_admin(&bot, &msg).await;
                 }
             }
         }

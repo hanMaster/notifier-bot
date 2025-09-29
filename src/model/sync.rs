@@ -7,10 +7,9 @@ use crate::adapters::amo::city_impl::AmoCityClient;
 use crate::adapters::amo::format_impl::AmoFormatClient;
 use crate::adapters::mailer::Email;
 use crate::adapters::profit::DealForAdd;
-use crate::config::config;
 use crate::model::deal::get_ru_object_type;
+use crate::sender::{send_msg_to_admin, send_msg_to_group};
 use std::sync::Arc;
-use teloxide::prelude::{ChatId, Requester};
 use teloxide::Bot;
 
 pub async fn sync(bot: &Bot) -> Vec<Result<Vec<DealForAdd>>> {
@@ -64,7 +63,7 @@ where
                 .collect::<Vec<_>>();
             let mut res = vec![];
             for funnel in filtered {
-                res.push(sync_funnel(amo.clone(), &db, &mut saved_ids_limits, funnel).await)
+                res.push(sync_funnel(amo.clone(), &db, &mut saved_ids_limits, funnel, bot).await)
             }
             mark_as_transferred(saved_ids_limits, bot, &db, amo.project()).await;
             res
@@ -81,6 +80,7 @@ async fn sync_funnel<A>(
     db: &Db,
     saved_ids_limits: &mut Vec<(u64, i32, bool)>,
     funnel: &Funnel,
+    bot: &Bot,
 ) -> Result<Vec<DealForAdd>>
 where
     A: AmoClient + Send + Sync + 'static,
@@ -119,14 +119,32 @@ where
                 continue;
             }
 
-            let token = amo_client.profitbase_client().get_profit_token().await?;
-            let mut profit_data = amo_client
-                .profitbase_client()
-                .get_profit_data(lead.deal_id, &token)
-                .await?;
-            profit_data.days_limit = lead.days_limit;
-            db.create_deal(&profit_data).await?;
-            new_data.push(profit_data);
+            let token_res = amo_client.profitbase_client().get_profit_token().await;
+            match token_res {
+                Ok(token) => {
+                    let profit_data_res = amo_client
+                        .profitbase_client()
+                        .get_profit_data(lead.deal_id, &token)
+                        .await;
+                    match profit_data_res {
+                        Ok(mut profit_data) => {
+                            profit_data.days_limit = lead.days_limit;
+                            db.create_deal(&profit_data).await?;
+                            new_data.push(profit_data);
+                        }
+                        Err(e) => {
+                            let msg = format!("Failed to get profit_data {:?}", e);
+                            error!("{msg}");
+                            send_msg_to_admin(bot, &msg).await;
+                        }
+                    }
+                }
+                Err(e) => {
+                    let msg = format!("Failed to get profit_token {:?}", e);
+                    error!("{msg}");
+                    send_msg_to_admin(bot, &msg).await;
+                }
+            }
         }
     }
 
@@ -147,24 +165,15 @@ async fn mark_as_transferred(
         info!("remain leads: {:?}", remain_ids);
         match db.mark_as_transferred(project, &remain_ids).await {
             Ok(rows) => {
-                let group_id = ChatId(config().TG_GROUP_ID);
                 for r in rows {
-                    if bot
-                        .send_message(
-                            group_id,
-                            format!(
-                                "Проект: {}, Дом №{}, к.{} ({}) передан!",
-                                r.project,
-                                r.house,
-                                r.object,
-                                get_ru_object_type(&r.object_type)
-                            ),
-                        )
-                        .await
-                        .is_err()
-                    {
-                        error!("Failed to send message to group");
-                    };
+                    let msg = format!(
+                        "Проект: {}, Дом №{}, к.{} ({}) передан!",
+                        r.project,
+                        r.house,
+                        r.object,
+                        get_ru_object_type(&r.object_type)
+                    );
+                    send_msg_to_group(bot, &msg).await;
                 }
             }
             Err(e) => {

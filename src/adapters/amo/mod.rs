@@ -1,9 +1,9 @@
-use log::debug;
 use crate::adapters::amo::data_types::leads::{CustomField, Deal, Leads};
 pub use crate::adapters::amo::data_types::pipeline::{Funnel, Pipeline};
 pub(crate) use crate::adapters::amo::error::{Error, Result};
 use crate::adapters::profit::ProfitbaseClient;
 use crate::bot_interface::PROJECTS;
+use log::debug;
 use reqwest::{Client, StatusCode};
 
 mod data_types;
@@ -54,7 +54,7 @@ pub trait AmoClient {
 
         while next.is_some() {
             let client = Client::new()
-                .get(next.as_ref().unwrap().href.to_string())
+                .get(next.take().unwrap().href)
                 .header("Authorization", format!("Bearer {}", self.token()));
             let mut data = client.send().await?.json::<Leads>().await?;
 

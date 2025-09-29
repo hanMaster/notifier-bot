@@ -15,6 +15,7 @@ mod error;
 mod model;
 mod worker;
 mod xlsx;
+mod sender;
 
 #[tokio::main]
 async fn main() -> Result<()> {
