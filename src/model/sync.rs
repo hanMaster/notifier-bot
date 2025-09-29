@@ -108,11 +108,14 @@ where
                     db.set_days_limit(amo_client.project(), lead.deal_id, lead.days_limit)
                         .await?;
                 }
-                // if deal returned to funnel we need mark it as not completed
-                if saved.2 {
-                    db.mark_as_not_transferred(amo_client.project(), lead.deal_id)
-                        .await?;
-                }
+                continue;
+            }
+
+            // if deal returned to funnel we need mark it as not completed
+            if db
+                .mark_as_not_transferred(amo_client.project(), lead.deal_id)
+                .await?
+            {
                 continue;
             }
 

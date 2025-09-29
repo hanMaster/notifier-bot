@@ -138,9 +138,8 @@ impl Db {
         Ok(done_objects)
     }
 
-    pub async fn mark_as_not_transferred(&self, project: &str, deal_id: u64) -> Result<()> {
-        info!("mark as not transferred project: {project}, deal_id: {deal_id}");
-        let _ = sqlx::query(
+    pub async fn mark_as_not_transferred(&self, project: &str, deal_id: u64) -> Result<bool> {
+        let res = sqlx::query(
             r#"
                 UPDATE deal SET transfer_completed = false
                             WHERE project = $1 AND deal.deal_id = $2"#,
@@ -150,7 +149,13 @@ impl Db {
         .execute(&self.db)
         .await?;
 
-        Ok(())
+        let updated = res.rows_affected() > 0;
+
+        if updated {
+            info!("mark as not transferred project: {project}, deal_id: {deal_id}");
+        }
+
+        Ok(updated)
     }
 
     pub async fn set_days_limit(&self, project: &str, deal_id: u64, days_limit: i32) -> Result<()> {
@@ -170,7 +175,7 @@ impl Db {
     }
 
     pub async fn read_deal_ids_by_project(&self, project: &str) -> Result<Vec<(u64, i32, bool)>> {
-        let records: Vec<DealData> = sqlx::query_as("SELECT * FROM deal WHERE project = $1")
+        let records: Vec<DealData> = sqlx::query_as("SELECT * FROM deal WHERE project = $1 AND transfer_completed = false")
             .bind(project)
             .fetch_all(&self.db)
             .await?;
