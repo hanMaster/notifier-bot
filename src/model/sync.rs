@@ -79,7 +79,7 @@ where
 async fn sync_funnel<A>(
     amo_client: Arc<A>,
     db: &Db,
-    saved_ids_limits: &mut Vec<(u64, i32)>,
+    saved_ids_limits: &mut Vec<(u64, i32, bool)>,
     funnel: &Funnel,
 ) -> Result<Vec<DealForAdd>>
 where
@@ -103,8 +103,14 @@ where
                 .cloned();
             if let Some(saved) = saved {
                 saved_ids_limits.retain(|i| i.0 != lead.deal_id);
+                // if saved days_limit not correct
                 if saved.1 != lead.days_limit {
                     db.set_days_limit(amo_client.project(), lead.deal_id, lead.days_limit)
+                        .await?;
+                }
+                // if deal returned to funnel we need mark it as not completed
+                if saved.2 {
+                    db.mark_as_not_transferred(amo_client.project(), lead.deal_id)
                         .await?;
                 }
                 continue;
@@ -125,7 +131,7 @@ where
 }
 
 async fn mark_as_transferred(
-    remain_ids_limits: Vec<(u64, i32)>,
+    remain_ids_limits: Vec<(u64, i32, bool)>,
     bot: &Bot,
     db: &Db,
     project: &str,
@@ -133,7 +139,7 @@ async fn mark_as_transferred(
     if !remain_ids_limits.is_empty() {
         let remain_ids = remain_ids_limits
             .into_iter()
-            .map(|(a, _)| (a))
+            .map(|(a, _, _)| (a))
             .collect::<Vec<_>>();
         info!("remain leads: {:?}", remain_ids);
         match db.mark_as_transferred(project, &remain_ids).await {
