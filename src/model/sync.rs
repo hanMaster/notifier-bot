@@ -160,7 +160,7 @@ async fn mark_as_transferred(
     if !remain_ids_limits.is_empty() {
         let remain_ids = remain_ids_limits
             .into_iter()
-            .map(|(a, _, _)| (a))
+            .map(|(a, _, _)| a)
             .collect::<Vec<_>>();
         info!("remain leads: {:?}", remain_ids);
         match db.mark_as_transferred(project, &remain_ids).await {

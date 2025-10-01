@@ -148,14 +148,14 @@ async fn sync_handler(bot: Bot, msg: Message) -> HandlerResult {
 }
 
 async fn start(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerResult {
-    if let Some(text) = msg.text() {
-        if text.starts_with("/start") {
-            let keyboard = make_kbd(1);
-            bot.send_message(msg.chat.id, "Выберите проект")
-                .reply_markup(keyboard)
-                .await?;
-            dialogue.update(State::ChooseProject).await?;
-        }
+    if let Some(text) = msg.text()
+        && text.starts_with("/start")
+    {
+        let keyboard = make_kbd(1);
+        bot.send_message(msg.chat.id, "Выберите проект")
+            .reply_markup(keyboard)
+            .await?;
+        dialogue.update(State::ChooseProject).await?;
     }
     Ok(())
 }
