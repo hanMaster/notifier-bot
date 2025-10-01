@@ -25,7 +25,8 @@ impl Display for DealForAdd {
         };
         write!(
             f,
-            "Проект: {}\nДом № {}\nТип объекта: {}\n№ {}\n{}Дата регистрации: {}\nПередать объект до: {}\n",
+            "Сделка: {}\nПроект: {} № {}\n{} № {}\n{}Дата регистрации: {}\nПередать объект до: {}\n",
+            self.deal_id,
             self.project,
             self.house,
             get_ru_object_type(self.object_type.as_str()),
