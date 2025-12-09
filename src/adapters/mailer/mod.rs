@@ -36,7 +36,7 @@ impl Email {
         rec
     }
 
-    pub async fn new_objects_notification(&self, deals: Vec<DealForAdd>) -> Result<()> {
+    pub async fn new_objects_notification(&self, deals: &[DealForAdd]) -> Result<()> {
         let subject = "Новые сделки по ДКП";
         let content: Vec<DealInfo> = deals.iter().map(Into::into).collect();
         let today = chrono::Local::now().format("%d.%m.%Y %H:%M");

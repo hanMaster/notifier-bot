@@ -1,39 +1,18 @@
-use crate::adapters::amo::data_types::leads::{CustomField, Deal, Leads};
-pub use crate::adapters::amo::data_types::pipeline::{Funnel, Pipeline};
+use crate::adapters::amo::amo_types::{CustomField, Deal, Leads};
 pub(crate) use crate::adapters::amo::error::{Error, Result};
 use crate::adapters::profit::ProfitbaseClient;
 use crate::bot_interface::PROJECTS;
 use log::debug;
 use reqwest::{Client, StatusCode};
 
-mod data_types;
+mod amo_types;
 mod error;
 
 pub mod city_impl;
-pub mod format_impl;
 
 pub trait AmoClient {
     fn new() -> Self;
     fn base_url(&self) -> String;
-    async fn get_funnels(&self) -> Result<Vec<Funnel>> {
-        let url = format!("{}leads/pipelines/{}", self.base_url(), self.pipeline_id());
-        let client = Client::new()
-            .get(&url)
-            .header("Authorization", format!("Bearer {}", self.token()));
-        let response = client.send().await?;
-        match response.status() {
-            StatusCode::OK => {
-                let data = response.json::<Pipeline>().await?;
-                let funnels = data._embedded.statuses;
-                Ok(funnels)
-            }
-            _ => {
-                let body = response.text().await?;
-                eprintln!("Failed to get funnels: {}", body);
-                Err(Error::Funnels(body))
-            }
-        }
-    }
     async fn get_funnel_leads(&self, funnel_id: i64) -> Result<Vec<Deal>> {
         let url = format!(
             "{}leads?filter[statuses][0][pipeline_id]={}&filter[statuses][0][status_id]={}",

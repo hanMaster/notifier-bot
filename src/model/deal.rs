@@ -104,19 +104,14 @@ impl Db {
         Ok(())
     }
 
-    pub async fn mark_as_transferred(
-        &self,
-        project: &str,
-        ids: &Vec<u64>,
-    ) -> Result<Vec<DealData>> {
-        info!("mark as transferred project: {}, ids: {:?}", project, ids);
+    pub async fn mark_as_transferred(&self, ids: &[u64]) -> Result<Vec<DealData>> {
+        info!("mark as transferred ids: {:?}", ids);
         for id in ids {
             let res = sqlx::query(
                 r#"
                 UPDATE deal SET transfer_completed = true
-                            WHERE project = $1 AND deal.deal_id = $2"#,
+                            WHERE deal.deal_id = $1"#,
             )
-            .bind(project)
             .bind(*id as i64)
             .execute(&self.db)
             .await?;
@@ -174,11 +169,11 @@ impl Db {
         Ok(())
     }
 
-    pub async fn read_deal_ids_by_project(&self, project: &str) -> Result<Vec<(u64, i32, bool)>> {
-        let records: Vec<DealData> = sqlx::query_as("SELECT * FROM deal WHERE project = $1 AND transfer_completed = false")
-            .bind(project)
-            .fetch_all(&self.db)
-            .await?;
+    pub async fn read_deal_ids(&self) -> Result<Vec<(u64, i32, bool)>> {
+        let records: Vec<DealData> =
+            sqlx::query_as("SELECT * FROM deal WHERE transfer_completed = false")
+                .fetch_all(&self.db)
+                .await?;
         let res = records
             .iter()
             .map(|r| (r.deal_id, r.days_limit, r.transfer_completed))

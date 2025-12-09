@@ -18,6 +18,7 @@ pub fn config() -> &'static Config {
 #[allow(dead_code)]
 #[allow(non_snake_case)]
 pub struct Config {
+    pub FUNNEL: i64,
     // --TG
     pub ADMIN_ID: i64,
     pub TG_GROUP_ID: i64,
@@ -49,6 +50,7 @@ impl Config {
     fn load_from_env() -> Result<Config> {
         dotenv().expect("dotenv init failed");
         Ok(Config {
+            FUNNEL: get_env_as_parse("FUNNEL")?,
             ADMIN_ID: get_env_as_parse("TG_HANMASTER_ID")?,
             TG_GROUP_ID: get_env_as_parse("TG_GROUP_ID")?,
             DB_URL: get_env("DB_URL")?,

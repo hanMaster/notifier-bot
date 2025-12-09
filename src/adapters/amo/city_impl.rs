@@ -1,5 +1,5 @@
-use crate::adapters::amo::data_types::leads::FlexibleType::Str;
-use crate::adapters::amo::data_types::leads::{CustomField, Deal, Leads, Val};
+use crate::adapters::amo::amo_types::FlexibleType::Str;
+use crate::adapters::amo::amo_types::{CustomField, Deal, Leads, Val};
 use crate::adapters::amo::AmoClient;
 use crate::adapters::profit::ProfitbaseClient;
 use crate::bot_interface::PROJECTS;
@@ -18,7 +18,8 @@ impl AmoClient for AmoCityClient {
         Self {
             account_id: &config().AMO_CITY_ACCOUNT,
             token: &config().AMO_CITY_TOKEN,
-            pipeline_id: 7486918,
+            // pipeline_id: 7486918,
+            pipeline_id: 10192498,
             project: PROJECTS[0],
             profitbase_client: ProfitbaseClient::new(
                 &config().PROF_CITY_ACCOUNT,
@@ -87,13 +88,6 @@ mod tests {
         let client = setup();
         let url = client.base_url();
         assert_eq!("https://dnscity.amocrm.ru/api/v4/", url);
-    }
-
-    #[tokio::test]
-    async fn test_get_funnels() {
-        let client = setup();
-        let funnels = client.get_funnels().await.unwrap();
-        assert_ne!(0, funnels.len());
     }
 
     #[tokio::test]

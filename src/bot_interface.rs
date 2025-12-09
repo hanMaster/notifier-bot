@@ -122,20 +122,18 @@ async fn sync_handler(bot: Bot, msg: Message) -> HandlerResult {
             .await?;
         let results = sync(&bot).await;
         let mut have_no_data = true;
-        for res in results {
-            match res {
-                Ok(data) => {
-                    if !data.is_empty() {
-                        have_no_data = false;
-                        for r in data {
-                            bot.send_message(msg.chat.id, r.to_string()).await?;
-                        }
+        match results {
+            Ok(data) => {
+                if !data.is_empty() {
+                    have_no_data = false;
+                    for r in data {
+                        bot.send_message(msg.chat.id, r.to_string()).await?;
                     }
                 }
-                Err(e) => {
-                    let admin_id = ChatId(config().ADMIN_ID);
-                    bot.send_message(admin_id, e.to_string()).await?;
-                }
+            }
+            Err(e) => {
+                let admin_id = ChatId(config().ADMIN_ID);
+                bot.send_message(admin_id, e.to_string()).await?;
             }
         }
         if have_no_data {

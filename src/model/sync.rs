@@ -1,92 +1,59 @@
-use crate::adapters::amo::{AmoClient, Funnel};
+use crate::adapters::amo::AmoClient;
 use crate::model::Db;
 use crate::Result;
 use log::{debug, error, info};
 
 use crate::adapters::amo::city_impl::AmoCityClient;
-use crate::adapters::amo::format_impl::AmoFormatClient;
 use crate::adapters::mailer::Email;
 use crate::adapters::profit::DealForAdd;
+use crate::config::config;
 use crate::model::deal::get_ru_object_type;
 use crate::sender::{send_msg_to_admin, send_msg_to_group};
 use std::sync::Arc;
 use teloxide::Bot;
 
-pub async fn sync(bot: &Bot) -> Vec<Result<Vec<DealForAdd>>> {
-    let mut results: Vec<Result<Vec<DealForAdd>>> = vec![];
+pub async fn sync(bot: &Bot) -> Result<Vec<DealForAdd>> {
     let amo_city = AmoCityClient::new();
-    results.extend(sync_project(amo_city, bot).await);
-    let amo_format = AmoFormatClient::new();
-    results.extend(sync_project(amo_format, bot).await);
-    let res = notify_by_email(&results).await;
-    if res.is_err() {
-        error!("Failed to send email {:?}", res);
-    }
-    results
+    let results = sync_project(amo_city, bot).await?;
+    notify_by_email(&results).await?;
+    Ok(results)
 }
 
-async fn notify_by_email(data: &[Result<Vec<DealForAdd>>]) -> Result<()> {
-    let mut clean_data: Vec<DealForAdd> = vec![];
-
-    data.iter().flatten().for_each(|v| {
-        if !v.is_empty() {
-            clean_data.extend(v.clone());
-        }
-    });
-
-    if !clean_data.is_empty() {
+async fn notify_by_email(data: &[DealForAdd]) -> Result<()> {
+    if !data.is_empty() {
         let email = Email::new();
-        email.new_objects_notification(clean_data).await?;
+        email.new_objects_notification(data).await?;
     }
     Ok(())
 }
 
-async fn sync_project<A>(amo: A, bot: &Bot) -> Vec<Result<Vec<DealForAdd>>>
+async fn sync_project<A>(amo: A, bot: &Bot) -> Result<Vec<DealForAdd>>
 where
     A: AmoClient + Send + Sync + 'static,
 {
     let amo = Arc::new(amo);
 
     let db = Db::new().await;
-    let mut saved_ids_limits = db
-        .read_deal_ids_by_project(amo.project())
-        .await
-        .unwrap_or(vec![]);
+    let mut saved_ids_limits = db.read_deal_ids().await?;
     debug!("saved ids: {:?}", saved_ids_limits);
 
-    let funnels_res = amo.get_funnels().await;
-    match funnels_res {
-        Ok(funnels) => {
-            let filtered = funnels
-                .iter()
-                .filter(|f| f.name.to_lowercase().contains("передача"))
-                .collect::<Vec<_>>();
-            let mut res = vec![];
-            for funnel in filtered {
-                res.push(sync_funnel(amo.clone(), &db, &mut saved_ids_limits, funnel, bot).await)
-            }
-            mark_as_transferred(saved_ids_limits, bot, &db, amo.project()).await;
-            res
-        }
-        Err(e) => {
-            error!("Failed to get funnels {:?}", e);
-            vec![]
-        }
-    }
+    let res = sync_funnel(amo.clone(), &db, &mut saved_ids_limits, bot).await?;
+    mark_as_transferred(saved_ids_limits, bot, &db).await;
+    Ok(res)
 }
 
 async fn sync_funnel<A>(
     amo_client: Arc<A>,
     db: &Db,
     saved_ids_limits: &mut Vec<(u64, i32, bool)>,
-    funnel: &Funnel,
     bot: &Bot,
 ) -> Result<Vec<DealForAdd>>
 where
     A: AmoClient + Send + Sync + 'static,
 {
-    info!("Syncing {} funnel {}", amo_client.project(), funnel.name);
-    let leads = amo_client.get_funnel_leads(funnel.id).await?;
+    let funnel_id = config().FUNNEL;
+    info!("Syncing funnel {}", funnel_id);
+    let leads = amo_client.get_funnel_leads(funnel_id).await?;
 
     info!(
         "leads: {:?}",
@@ -151,19 +118,14 @@ where
     Ok(new_data)
 }
 
-async fn mark_as_transferred(
-    remain_ids_limits: Vec<(u64, i32, bool)>,
-    bot: &Bot,
-    db: &Db,
-    project: &str,
-) {
+async fn mark_as_transferred(remain_ids_limits: Vec<(u64, i32, bool)>, bot: &Bot, db: &Db) {
     if !remain_ids_limits.is_empty() {
         let remain_ids = remain_ids_limits
             .into_iter()
             .map(|(a, _, _)| a)
             .collect::<Vec<_>>();
         info!("remain leads: {:?}", remain_ids);
-        match db.mark_as_transferred(project, &remain_ids).await {
+        match db.mark_as_transferred(&remain_ids).await {
             Ok(rows) => {
                 for r in rows {
                     let msg = format!(

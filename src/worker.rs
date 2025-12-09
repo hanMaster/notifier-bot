@@ -29,17 +29,15 @@ pub fn do_work(bot: Bot) {
                 send_msg_to_admin(&bot, &info).await;
 
                 let results = sync(&bot).await;
-                for res in results {
-                    match res {
-                        Ok(data) => {
-                            for r in data {
-                                let msg = format!("Новая продажа!\n{r}");
-                                send_msg_to_group(&bot, &msg).await;
-                            }
+                match results {
+                    Ok(data) => {
+                        for r in data {
+                            let msg = format!("Новая продажа!\n{r}");
+                            send_msg_to_group(&bot, &msg).await;
                         }
-                        Err(e) => {
-                            send_msg_to_admin(&bot, &e.to_string()).await;
-                        }
+                    }
+                    Err(e) => {
+                        send_msg_to_admin(&bot, &e.to_string()).await;
                     }
                 }
             }
