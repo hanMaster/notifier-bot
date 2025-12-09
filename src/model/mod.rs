@@ -75,8 +75,8 @@ pub async fn init_db() -> Result<()> {
             Err(e) => panic!("{}", e),
         }
     }
-    info!("clean deals");
-    clean_deals(&config().DB_URL).await?;
-    info!("clean deals successfully");
+    // info!("clean deals");
+    // clean_deals(&config().DB_URL).await?;
+    // info!("clean deals successfully");
     Ok(())
 }
