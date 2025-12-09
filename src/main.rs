@@ -1,4 +1,4 @@
-use crate::bot_interface::{bot_handler, BotCommand, State};
+use crate::bot_interface::{BotCommand, State, bot_handler};
 pub use crate::error::Result;
 use crate::model::init_db;
 use dotenvy::dotenv;
@@ -13,9 +13,9 @@ mod config;
 mod deadline_worker;
 mod error;
 mod model;
+mod sender;
 mod worker;
 mod xlsx;
-mod sender;
 
 #[tokio::main]
 async fn main() -> Result<()> {

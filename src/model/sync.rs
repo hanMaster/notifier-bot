@@ -7,14 +7,13 @@ use crate::adapters::amo::city_impl::AmoCityClient;
 use crate::adapters::mailer::Email;
 use crate::adapters::profit::DealForAdd;
 use crate::config::config;
+use crate::error::Error::AppErr;
 use crate::model::deal::get_ru_object_type;
-use crate::sender::{send_msg_to_admin, send_msg_to_group};
-use std::sync::Arc;
+use crate::sender::send_msg_to_group;
 use teloxide::Bot;
 
 pub async fn sync(bot: &Bot) -> Result<Vec<DealForAdd>> {
-    let amo_city = AmoCityClient::new();
-    let results = sync_project(amo_city, bot).await?;
+    let results = sync_project(bot).await?;
     notify_by_email(&results).await?;
     Ok(results)
 }
@@ -27,32 +26,23 @@ async fn notify_by_email(data: &[DealForAdd]) -> Result<()> {
     Ok(())
 }
 
-async fn sync_project<A>(amo: A, bot: &Bot) -> Result<Vec<DealForAdd>>
-where
-    A: AmoClient + Send + Sync + 'static,
-{
-    let amo = Arc::new(amo);
-
+async fn sync_project(bot: &Bot) -> Result<Vec<DealForAdd>> {
     let db = Db::new().await;
     let mut saved_ids_limits = db.read_deal_ids().await?;
     debug!("saved ids: {:?}", saved_ids_limits);
 
-    let res = sync_funnel(amo.clone(), &db, &mut saved_ids_limits, bot).await?;
+    let res = sync_funnel(&db, &mut saved_ids_limits).await?;
     mark_as_transferred(saved_ids_limits, bot, &db).await;
     Ok(res)
 }
 
-async fn sync_funnel<A>(
-    amo_client: Arc<A>,
+async fn sync_funnel(
     db: &Db,
     saved_ids_limits: &mut Vec<(u64, i32, bool)>,
-    bot: &Bot,
-) -> Result<Vec<DealForAdd>>
-where
-    A: AmoClient + Send + Sync + 'static,
-{
+) -> Result<Vec<DealForAdd>> {
     let funnel_id = config().FUNNEL;
     info!("Syncing funnel {}", funnel_id);
+    let amo_client = AmoCityClient::new();
     let leads = amo_client.get_funnel_leads(funnel_id).await?;
 
     info!(
@@ -72,7 +62,7 @@ where
                 saved_ids_limits.retain(|i| i.0 != lead.deal_id);
                 // if saved days_limit not correct
                 if saved.1 != lead.days_limit {
-                    db.set_days_limit(amo_client.project(), lead.deal_id, lead.days_limit)
+                    db.set_days_limit(&lead.project, lead.deal_id, lead.days_limit)
                         .await?;
                 }
                 continue;
@@ -80,38 +70,27 @@ where
 
             // if deal returned to funnel we need mark it as not completed
             if db
-                .mark_as_not_transferred(amo_client.project(), lead.deal_id)
+                .mark_as_not_transferred(&lead.project, lead.deal_id)
                 .await?
             {
                 continue;
             }
 
-            let token_res = amo_client.profitbase_client().get_profit_token().await;
-            match token_res {
-                Ok(token) => {
-                    let profit_data_res = amo_client
-                        .profitbase_client()
-                        .get_profit_data(lead.deal_id, &token)
-                        .await;
-                    match profit_data_res {
-                        Ok(mut profit_data) => {
-                            profit_data.days_limit = lead.days_limit;
-                            db.create_deal(&profit_data).await?;
-                            new_data.push(profit_data);
-                        }
-                        Err(e) => {
-                            let msg = format!("Failed to get profit_data {:?}", e);
-                            error!("{msg}");
-                            send_msg_to_admin(bot, &msg).await;
-                        }
-                    }
-                }
-                Err(e) => {
-                    let msg = format!("Failed to get profit_token {:?}", e);
-                    error!("{msg}");
-                    send_msg_to_admin(bot, &msg).await;
-                }
-            }
+            let token = amo_client
+                .profitbase_client()
+                .get_profit_token()
+                .await
+                .map_err(|e| AppErr(format!("Failed to get profit token {:?}", e)))?;
+
+            let mut profit_data = amo_client
+                .profitbase_client()
+                .get_profit_data(lead.deal_id, lead.project, &token)
+                .await
+                .map_err(|e| AppErr(format!("Failed to get profit data {:?}", e)))?;
+
+            profit_data.days_limit = lead.days_limit;
+            db.create_deal(&profit_data).await?;
+            new_data.push(profit_data);
         }
     }
 

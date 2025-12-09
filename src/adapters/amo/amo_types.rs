@@ -29,6 +29,20 @@ pub struct Lead {
     pub created_at: i64,
     pub custom_fields_values: Vec<CustomField>,
 }
+
+impl Lead {
+    pub fn val_to_str(&self, field_name: &str) -> String {
+        let field_opt = self
+            .custom_fields_values
+            .iter()
+            .find(|f| f.field_name == field_name);
+        match field_opt {
+            None => "".to_string(),
+            Some(f) => f.values[0].value.clone().into(),
+        }
+    }
+}
+
 #[derive(Deserialize, Debug, Clone, PartialEq)]
 pub struct CustomField {
     pub field_id: u64,
@@ -58,8 +72,18 @@ impl From<FlexibleType> for i32 {
     }
 }
 
+impl From<FlexibleType> for String {
+    fn from(value: FlexibleType) -> Self {
+        match value {
+            FlexibleType::Str(str_value) => str_value,
+            FlexibleType::Int(val) => val.to_string(),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct Deal {
     pub deal_id: u64,
     pub days_limit: i32,
+    pub project: String,
 }

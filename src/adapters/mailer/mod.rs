@@ -1,13 +1,13 @@
+use crate::Result;
 use crate::adapters::mailer::data_types::{DealInfo, DkpStat, StatNumbers};
 use crate::adapters::profit::DealForAdd;
 use crate::config::config;
 use crate::xlsx::Xlsx;
-use crate::Result;
 use askama::Template;
 use data_types::DkpObjects;
 use log::info;
-use mail_send::mail_builder::MessageBuilder;
 use mail_send::SmtpClientBuilder;
+use mail_send::mail_builder::MessageBuilder;
 
 pub mod data_types;
 

@@ -8,7 +8,7 @@ pub enum Error {
     ProfitAuthFailed(String),
     Request(reqwest::Error),
     ProfitGetDataFailed(String),
-    Parse(ParseIntError)
+    Parse(ParseIntError),
 }
 
 // region:    ---From

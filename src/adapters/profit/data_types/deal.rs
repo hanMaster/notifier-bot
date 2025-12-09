@@ -33,7 +33,8 @@ impl Display for DealForAdd {
             self.object,
             facing,
             self.created_on.format("%d.%m.%Y"),
-            self.created_on.add(Duration::from_secs(86400 * self.days_limit as u64))
+            self.created_on
+                .add(Duration::from_secs(86400 * self.days_limit as u64))
                 .format("%d.%m.%Y")
         )
     }

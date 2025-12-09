@@ -1,4 +1,4 @@
 pub mod auth;
 
-pub mod profit_data;
 pub mod deal;
+pub mod profit_data;

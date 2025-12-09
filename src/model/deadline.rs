@@ -1,11 +1,11 @@
+use crate::Result;
+use crate::adapters::mailer::Email;
 use crate::adapters::mailer::data_types::DealInfo;
 use crate::model::Db;
-use crate::Result;
 use chrono::{Local, TimeZone};
 use log::{debug, info};
 use std::ops::Add;
 use std::time::Duration;
-use crate::adapters::mailer::Email;
 
 pub async fn search_deadline() -> Result<()> {
     info!("Searching for deadline objects");

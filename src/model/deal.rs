@@ -1,9 +1,9 @@
+use crate::Result;
 use crate::adapters::profit::DealForAdd;
 use crate::model::Db;
-use crate::Result;
 use log::{debug, error, info};
-use sqlx::types::chrono::NaiveDateTime;
 use sqlx::FromRow;
+use sqlx::types::chrono::NaiveDateTime;
 use std::ops::Add;
 use std::time::Duration;
 

@@ -1,8 +1,8 @@
-use crate::adapters::mailer::data_types::{DealInfo, StatNumbers};
+use crate::Result;
 use crate::adapters::mailer::Email;
+use crate::adapters::mailer::data_types::{DealInfo, StatNumbers};
 use crate::bot_interface::PROJECTS;
 use crate::model::Db;
-use crate::Result;
 
 pub async fn send_stat() -> Result<()> {
     let db = Db::new().await;

@@ -2,7 +2,7 @@ use crate::adapters::amo::amo_types::{CustomField, Deal, Leads};
 pub(crate) use crate::adapters::amo::error::{Error, Result};
 use crate::adapters::profit::ProfitbaseClient;
 use crate::bot_interface::PROJECTS;
-use log::debug;
+use log::{debug, info};
 use reqwest::{Client, StatusCode};
 
 mod amo_types;
@@ -20,6 +20,7 @@ pub trait AmoClient {
             self.pipeline_id(),
             funnel_id
         );
+        info!("fetch {url}");
         let client = Client::new()
             .get(&url)
             .header("Authorization", format!("Bearer {}", self.token()));
@@ -32,8 +33,10 @@ pub trait AmoClient {
         let mut leads = self.extract_dkp_deals(data);
 
         while next.is_some() {
+            let url = next.take().unwrap().href;
+            info!("fetch {url}");
             let client = Client::new()
-                .get(next.take().unwrap().href)
+                .get(url)
                 .header("Authorization", format!("Bearer {}", self.token()));
             let mut data = client.send().await?.json::<Leads>().await?;
 
@@ -46,23 +49,23 @@ pub trait AmoClient {
     }
     fn extract_dkp_deals(&self, leads: Leads) -> Vec<Deal>;
 
-    fn project(&self) -> &str;
-
     fn profitbase_client(&self) -> &ProfitbaseClient;
 
     fn pipeline_id(&self) -> i64;
     fn token(&self) -> &str;
 
-    fn deal_with_days_limit(&self, deal_id: u64, flex_value: Option<&CustomField>) -> Deal {
-        let default_days_limit = if self.project().eq(PROJECTS[0]) {
-            60
-        } else {
-            30
-        };
+    fn deal_with_days_limit(
+        &self,
+        deal_id: u64,
+        flex_value: Option<&CustomField>,
+        project: String,
+    ) -> Deal {
+        let default_days_limit = if project == PROJECTS[0] { 60 } else { 30 };
         match flex_value {
             None => Deal {
                 deal_id,
                 days_limit: default_days_limit,
+                project,
             },
             Some(custom_field) => {
                 let flex_val = custom_field.values.first().unwrap().clone();
@@ -72,6 +75,7 @@ pub trait AmoClient {
                 Deal {
                     deal_id,
                     days_limit,
+                    project,
                 }
             }
         }

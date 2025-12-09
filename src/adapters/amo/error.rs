@@ -16,7 +16,6 @@ impl From<reqwest::Error> for Error {
 }
 // endregion: ---From
 
-
 // region:    --- Error boilerplate
 impl Display for Error {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {

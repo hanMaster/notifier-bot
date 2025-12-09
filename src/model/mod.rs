@@ -1,13 +1,13 @@
-use crate::config::config;
 use crate::Result;
+use crate::config::config;
 use sqlx::migrate::MigrateDatabase;
 use sqlx::sqlite::SqlitePoolOptions;
 use sqlx::{Sqlite, SqlitePool};
 
-pub mod deal;
-pub mod sync;
 pub mod deadline;
+pub mod deal;
 pub mod stat;
+pub mod sync;
 
 pub struct Db {
     pub db: SqlitePool,

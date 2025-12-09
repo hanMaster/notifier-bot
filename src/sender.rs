@@ -1,7 +1,7 @@
 use crate::config::config;
 use log::error;
-use teloxide::prelude::{ChatId, Requester};
 use teloxide::Bot;
+use teloxide::prelude::{ChatId, Requester};
 
 pub async fn send_msg_to_admin(bot: &Bot, msg: &str) {
     let admin_id = ChatId(config().ADMIN_ID);

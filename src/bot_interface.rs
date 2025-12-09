@@ -4,7 +4,7 @@ use crate::model::sync::sync;
 use log::info;
 use std::error::Error;
 use teloxide::dispatching::dialogue::InMemStorage;
-use teloxide::dispatching::{dialogue, DpHandlerDescription};
+use teloxide::dispatching::{DpHandlerDescription, dialogue};
 use teloxide::dptree::case;
 use teloxide::macros::BotCommands;
 use teloxide::prelude::*;

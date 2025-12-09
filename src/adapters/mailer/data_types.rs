@@ -1,5 +1,5 @@
 use crate::adapters::profit::DealForAdd;
-use crate::model::deal::{get_ru_object_type, DealData};
+use crate::model::deal::{DealData, get_ru_object_type};
 use askama::Template;
 use std::ops::Add;
 use std::time::Duration;

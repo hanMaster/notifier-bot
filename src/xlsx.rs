@@ -1,6 +1,6 @@
 use crate::Result;
-use rust_xlsxwriter::*;
 use crate::adapters::mailer::data_types::DealInfo;
+use rust_xlsxwriter::*;
 
 pub struct Xlsx;
 
@@ -34,7 +34,7 @@ impl Xlsx {
         worksheet.write_with_format(0, 4, "Тип отделки", &header_format)?;
         worksheet.write_with_format(0, 5, "Дата регистрации", &header_format)?;
         worksheet.write_with_format(0, 6, "Передать объект до", &header_format)?;
-        
+
         for (idx, deal) in deals.iter().enumerate() {
             worksheet.write_with_format((idx + 1) as RowNum, 0, &deal.project, &row_format)?;
             worksheet.write_with_format((idx + 1) as RowNum, 1, deal.house, &row_format)?;

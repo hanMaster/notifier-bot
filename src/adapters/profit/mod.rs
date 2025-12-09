@@ -12,19 +12,13 @@ mod error;
 pub struct ProfitbaseClient {
     pub account_id: &'static str,
     pub api_key: &'static str,
-    project: &'static str,
 }
 
 impl ProfitbaseClient {
-    pub fn new(
-        account_id: &'static str,
-        api_key: &'static str,
-        project: &'static str,
-    ) -> ProfitbaseClient {
+    pub fn new(account_id: &'static str, api_key: &'static str) -> ProfitbaseClient {
         Self {
             account_id,
             api_key,
-            project,
         }
     }
 
@@ -59,7 +53,12 @@ impl ProfitbaseClient {
         }
     }
 
-    pub async fn get_profit_data(&self, deal_id: u64, token: &str) -> Result<DealForAdd> {
+    pub async fn get_profit_data(
+        &self,
+        deal_id: u64,
+        project: String,
+        token: &str,
+    ) -> Result<DealForAdd> {
         let url = format!(
             "{}/property/deal/{}?access_token={}",
             self.base_url(),
@@ -94,7 +93,7 @@ impl ProfitbaseClient {
                 if sold_opt.is_none() {
                     let msg = format!(
                         "Failed to parse dealId: {deal_id}, {}, house: {house}, type: {}, № {}",
-                        self.project, p.property_type, p.number
+                        project, p.property_type, p.number
                     );
                     return Err(Error::ProfitGetDataFailed(msg));
                 }
@@ -112,7 +111,7 @@ impl ProfitbaseClient {
 
                 Ok(DealForAdd {
                     deal_id,
-                    project: self.project.to_string(),
+                    project,
                     house,
                     object_type: p.property_type.clone(),
                     object: p.number.parse::<i32>()?,
@@ -132,12 +131,11 @@ impl ProfitbaseClient {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::bot_interface::PROJECTS;
     use crate::config::config;
     fn setup() -> ProfitbaseClient {
         let account_id = &config().PROF_CITY_ACCOUNT;
         let api_key = &config().PROF_CITY_API_KEY;
-        ProfitbaseClient::new(account_id, api_key, PROJECTS[0])
+        ProfitbaseClient::new(account_id, api_key)
     }
     #[test]
     fn base_url() {
@@ -159,7 +157,10 @@ mod tests {
         let client = setup();
         let token = client.get_profit_token().await.unwrap();
         println!("{:?}", token);
-        let data = client.get_profit_data(26835973, &token).await.unwrap();
+        let data = client
+            .get_profit_data(26835973, "DNS Сити".to_string(), &token)
+            .await
+            .unwrap();
         println!("{:?}", data);
     }
 }

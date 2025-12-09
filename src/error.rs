@@ -1,5 +1,5 @@
-use std::fmt::{Display, Formatter};
 use crate::adapters::{amo, profit};
+use std::fmt::{Display, Formatter};
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -20,7 +20,8 @@ pub enum Error {
     // -- Chrono
     Time(chrono::OutOfRangeError),
     // -- Xlsx
-    Xlsx(rust_xlsxwriter::XlsxError)
+    Xlsx(rust_xlsxwriter::XlsxError),
+    AppErr(String),
 }
 
 // region:    ---From
