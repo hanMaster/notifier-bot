@@ -1,5 +1,5 @@
-use crate::Result;
 use crate::config::config;
+use crate::Result;
 use sqlx::migrate::MigrateDatabase;
 use sqlx::sqlite::SqlitePoolOptions;
 use sqlx::{Sqlite, SqlitePool};
@@ -52,6 +52,16 @@ async fn create_schema(db_url: &str) -> Result<()> {
     Ok(())
 }
 
+async fn clean_deals(db_url: &str) -> Result<()> {
+    let pool = SqlitePool::connect(db_url).await?;
+    let qry = r#"
+    DELETE FROM deal WHERE deal_id > 0
+    "#;
+    let _ = sqlx::query(qry).execute(&pool).await?;
+    pool.close().await;
+    Ok(())
+}
+
 pub async fn init_db() -> Result<()> {
     if !Sqlite::database_exists(&config().DB_URL)
         .await
@@ -63,5 +73,6 @@ pub async fn init_db() -> Result<()> {
             Err(e) => panic!("{}", e),
         }
     }
+    clean_deals(&config().DB_URL).await?;
     Ok(())
 }
