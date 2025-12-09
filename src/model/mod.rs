@@ -1,5 +1,6 @@
 use crate::config::config;
 use crate::Result;
+use log::info;
 use sqlx::migrate::MigrateDatabase;
 use sqlx::sqlite::SqlitePoolOptions;
 use sqlx::{Sqlite, SqlitePool};
@@ -67,12 +68,15 @@ pub async fn init_db() -> Result<()> {
         .await
         .unwrap_or(false)
     {
+        info!("Initializing DB...");
         Sqlite::create_database(&config().DB_URL).await?;
         match create_schema(&config().DB_URL).await {
             Ok(_) => log::info!("database created successfully"),
             Err(e) => panic!("{}", e),
         }
     }
+    info!("clean deals");
     clean_deals(&config().DB_URL).await?;
+    info!("clean deals successfully");
     Ok(())
 }
