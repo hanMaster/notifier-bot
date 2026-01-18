@@ -16,6 +16,8 @@ pub struct ProfitData {
     pub attributes: Attrs,
     #[serde(rename = "soldAt")]
     pub sold_at: Option<String>,
+    #[serde(rename = "bookedAt")]
+    pub booked_at: Option<String>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
