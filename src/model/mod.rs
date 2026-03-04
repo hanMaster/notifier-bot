@@ -53,6 +53,7 @@ async fn create_schema(db_url: &str) -> Result<()> {
     Ok(())
 }
 
+#[allow(dead_code)]
 async fn clean_deals(db_url: &str) -> Result<()> {
     let pool = SqlitePool::connect(db_url).await?;
     let qry = r#"

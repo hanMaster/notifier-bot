@@ -20,3 +20,4 @@ chrono = "0.4"
 mail-send = "0.5"
 askama = "0.15"
 rust_xlsxwriter = "0.92"
+rustls = { version = "0.23", features = ["ring"] }
