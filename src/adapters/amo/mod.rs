@@ -38,12 +38,26 @@ pub trait AmoClient {
             let client = Client::new()
                 .get(url)
                 .header("Authorization", format!("Bearer {}", self.token()));
-            let mut data = client.send().await?.json::<Leads>().await?;
 
-            next = data._links.next.take();
-            let leads_in_while = self.extract_dkp_deals(data);
+            let response = client.send().await?;
 
-            leads.extend(leads_in_while);
+            match response.status() {
+                StatusCode::OK => {
+                    let mut data = response.json::<Leads>().await?;
+                    next = data._links.next.take();
+                    let leads_in_while = self.extract_dkp_deals(data);
+                    leads.extend(leads_in_while);
+                }
+                StatusCode::NO_CONTENT => {
+                    next = None;
+                }
+                status_code => {
+                    return Err(Error::Funnels(format!(
+                        "Fetch response status: {:?}",
+                        status_code
+                    )));
+                }
+            }
         }
         Ok(leads)
     }
