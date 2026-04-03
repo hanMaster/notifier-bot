@@ -41,6 +41,16 @@ impl Lead {
             Some(f) => f.values[0].value.clone().into(),
         }
     }
+    pub fn val_to_num(&self, field_name: &str) -> i32 {
+        let field_opt = self
+            .custom_fields_values
+            .iter()
+            .find(|f| f.field_name == field_name);
+        match field_opt {
+            None => 0,
+            Some(f) => f.values[0].value.clone().into(),
+        }
+    }
 }
 
 #[derive(Deserialize, Debug, Clone, PartialEq)]

@@ -1,3 +1,5 @@
+use chrono::{DateTime, Local, NaiveDateTime, TimeZone, Utc};
+use log::info;
 use crate::adapters::amo::AmoClient;
 use crate::adapters::amo::amo_types::FlexibleType::Str;
 use crate::adapters::amo::amo_types::{CustomField, Deal, Leads, Val};
@@ -45,10 +47,10 @@ impl AmoClient for AmoCityClient {
                 })
             })
             .map(|l| {
-                let flex_val = l
-                    .custom_fields_values
-                    .iter()
-                    .find(|v| v.field_id == 1635059);
+                info!("================================");
+
+                let days = l.val_to_num("Период передачи (дней)");
+                info!("ID: {}, days: {}", l.id ,days);
 
                 let raw_project = l.val_to_str("ЖК");
                 let project = if raw_project == PROJECTS[0] {
@@ -56,8 +58,29 @@ impl AmoClient for AmoCityClient {
                 } else {
                     PROJECTS[1].to_string()
                 };
+                info!("Project: {}", project);
 
-                self.deal_with_days_limit(l.id, flex_val, project)
+                let house = l.val_to_str("Дом");
+                info!("Дом: {}", house);
+
+                let sold_at = l.val_to_str("Дата продажи для отчета");
+                if sold_at.len() > 0 {
+                    let ts = sold_at.parse::<i64>().unwrap_or(0);
+                    let date = ts_to_date(ts);
+                    info!("Sold date: {}", date.format("%d.%m.%Y"));
+                }
+
+                let facing = l.val_to_str("Вид отделки квартиры");
+                info!("Отделка: {}", facing);
+
+                let object_type = l.val_to_str("Тип помещения");
+                info!("Тип помещения: {}", object_type);
+
+                let object_number = l.val_to_str("Номер помещения");
+                info!("Номер помещения: {}", object_number);
+                info!("================================");
+
+                self.deal_with_days_limit(l.id, days, project)
             })
             .collect::<Vec<_>>()
     }
@@ -73,6 +96,12 @@ impl AmoClient for AmoCityClient {
     fn token(&self) -> &str {
         self.token
     }
+}
+
+pub fn ts_to_date(ts: i64) -> NaiveDateTime {
+    let date = Utc.timestamp_opt(ts, 0).unwrap();
+    let local_date: DateTime<Local> = DateTime::from(date);
+    local_date.naive_local()
 }
 
 #[cfg(test)]
