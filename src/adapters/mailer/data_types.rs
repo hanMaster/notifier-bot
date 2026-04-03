@@ -1,6 +1,7 @@
 use crate::adapters::profit::DealForAdd;
 use crate::model::deal::{DealData, get_ru_object_type};
 use askama::Template;
+use chrono::NaiveDateTime;
 use std::ops::Add;
 use std::time::Duration;
 
@@ -15,43 +16,58 @@ pub struct DealInfo {
     pub exp_date: String,
 }
 
-impl From<&DealForAdd> for DealInfo {
-    fn from(value: &DealForAdd) -> Self {
-        let reg_date = value.created_on.format("%d.%m.%Y").to_string();
-        let exp_date = value
-            .created_on
-            .add(Duration::from_secs(86400 * value.days_limit as u64))
+impl DealInfo {
+    fn from_deal(
+        created_on: &NaiveDateTime,
+        days_limit: u64,
+        project: &str,
+        house: i32,
+        object_type: &str,
+        object: i32,
+        facing: &str,
+    ) -> Self {
+        let reg_date = created_on.format("%d.%m.%Y").to_string();
+        let exp_date = created_on
+            .add(Duration::from_secs(86400 * days_limit))
             .format("%d.%m.%Y")
             .to_string();
         Self {
-            project: value.project.clone(),
-            house: value.house,
-            object_type: get_ru_object_type(value.object_type.as_str()).to_string(),
-            object: value.object,
-            facing: value.facing.clone(),
+            project: project.to_string(),
+            house,
+            object_type: get_ru_object_type(object_type).to_string(),
+            object,
+            facing: facing.to_string(),
             reg_date,
             exp_date,
         }
     }
 }
 
+impl From<&DealForAdd> for DealInfo {
+    fn from(d: &DealForAdd) -> Self {
+        DealInfo::from_deal(
+            &d.created_on,
+            d.days_limit as u64,
+            &d.project,
+            d.house,
+            &d.object_type,
+            d.object,
+            &d.facing,
+        )
+    }
+}
+
 impl From<DealData> for DealInfo {
-    fn from(value: DealData) -> Self {
-        let reg_date = value.created_on.format("%d.%m.%Y").to_string();
-        let exp_date = value
-            .created_on
-            .add(Duration::from_secs(86400 * value.days_limit as u64))
-            .format("%d.%m.%Y")
-            .to_string();
-        Self {
-            project: value.project.clone(),
-            house: value.house,
-            object_type: get_ru_object_type(value.object_type.as_str()).to_string(),
-            object: value.object,
-            facing: value.facing.clone(),
-            reg_date,
-            exp_date,
-        }
+    fn from(d: DealData) -> Self {
+        DealInfo::from_deal(
+            &d.created_on,
+            d.days_limit as u64,
+            &d.project,
+            d.house,
+            &d.object_type,
+            d.object,
+            &d.facing,
+        )
     }
 }
 
