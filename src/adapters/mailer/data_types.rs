@@ -8,9 +8,9 @@ use std::time::Duration;
 #[derive(Debug, Clone)]
 pub struct DealInfo {
     pub project: String,
-    pub house: i32,
-    pub object_type: String,
-    pub object: i32,
+    pub house: String,
+    pub property_type: String,
+    pub property_num: i32,
     pub facing: String,
     pub reg_date: String,
     pub exp_date: String,
@@ -21,9 +21,9 @@ impl DealInfo {
         created_on: &NaiveDateTime,
         days_limit: u64,
         project: &str,
-        house: i32,
-        object_type: &str,
-        object: i32,
+        house: &str,
+        property_type: &str,
+        property_num: i32,
         facing: &str,
     ) -> Self {
         let reg_date = created_on.format("%d.%m.%Y").to_string();
@@ -33,9 +33,9 @@ impl DealInfo {
             .to_string();
         Self {
             project: project.to_string(),
-            house,
-            object_type: get_ru_object_type(object_type).to_string(),
-            object,
+            house: house.to_string(),
+            property_type: get_ru_object_type(property_type).to_string(),
+            property_num,
             facing: facing.to_string(),
             reg_date,
             exp_date,
@@ -49,9 +49,9 @@ impl From<&DealForAdd> for DealInfo {
             &d.created_on,
             d.days_limit as u64,
             &d.project,
-            d.house,
-            &d.object_type,
-            d.object,
+            &d.house,
+            &d.property_type,
+            d.property_num,
             &d.facing,
         )
     }
@@ -63,9 +63,9 @@ impl From<DealData> for DealInfo {
             &d.created_on,
             d.days_limit as u64,
             &d.project,
-            d.house,
-            &d.object_type,
-            d.object,
+            &d.house,
+            &d.property_type,
+            d.property_num,
             &d.facing,
         )
     }

@@ -14,23 +14,23 @@ pub async fn send_stat() -> Result<()> {
 
     let format_apartments = deals_in_work
         .iter()
-        .filter(|d| d.project == PROJECTS[1] && d.object_type == "property")
+        .filter(|d| d.project == PROJECTS[1] && d.property_type == "property")
         .count();
     let format_pantries = deals_in_work
         .iter()
-        .filter(|d| d.project == PROJECTS[1] && d.object_type == "pantry")
+        .filter(|d| d.project == PROJECTS[1] && d.property_type == "pantry")
         .count();
     let format_parking = deals_in_work
         .iter()
-        .filter(|d| d.project == PROJECTS[1] && d.object_type == "parking")
+        .filter(|d| d.project == PROJECTS[1] && d.property_type == "parking")
         .count();
     let city_apartments = deals_in_work
         .iter()
-        .filter(|d| d.project == PROJECTS[0] && d.object_type == "property")
+        .filter(|d| d.project == PROJECTS[0] && d.property_type == "property")
         .count();
     let city_pantries = deals_in_work
         .iter()
-        .filter(|d| d.project == PROJECTS[0] && d.object_type == "pantry")
+        .filter(|d| d.project == PROJECTS[0] && d.property_type == "pantry")
         .count();
     let stat_numbers = StatNumbers {
         format_apartments,

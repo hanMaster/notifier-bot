@@ -1,5 +1,5 @@
-use crate::config::config;
 use crate::Result;
+use crate::config::config;
 use log::info;
 use sqlx::migrate::MigrateDatabase;
 use sqlx::sqlite::SqlitePoolOptions;
@@ -38,9 +38,9 @@ async fn create_schema(db_url: &str) -> Result<()> {
         id                  INTEGER PRIMARY KEY AUTOINCREMENT,
         deal_id             BIGINTEGER          NOT NULL,
         project             TEXT                NOT NULL,
-        house               INTEGER             NOT NULL,
-        object_type         TEXT                NOT NULL,
-        object              INTEGER             NOT NULL,
+        house               TEXT                NOT NULL,
+        property_type       TEXT                NOT NULL,
+        property_num        INTEGER             NOT NULL,
         facing              TEXT,
         days_limit          INTEGER  DEFAULT    30,
         transfer_completed  BOOLEAN DEFAULT FALSE,

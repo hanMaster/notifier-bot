@@ -80,14 +80,7 @@ impl ProfitbaseClient {
             debug!("[get_profit_data] received: {:?}", data);
             if data.status == "success" {
                 let p = data.data.first().unwrap();
-
-                let house_parts = p.house_name.split('№').collect::<Vec<_>>();
-                let house = if house_parts.len() < 2 {
-                    house_parts[0].to_string()
-                } else {
-                    house_parts[1].to_string()
-                };
-                let house = house.parse::<i32>().unwrap_or(-1);
+                let house = p.house_name.clone();
 
                 let sold_at = match p.sold_at.as_ref() {
                     None => {
@@ -120,8 +113,8 @@ impl ProfitbaseClient {
                     deal_id,
                     project,
                     house,
-                    object_type: p.property_type.clone(),
-                    object: p.number.parse::<i32>()?,
+                    property_type: p.property_type.clone(),
+                    property_num: p.number.parse::<i32>()?,
                     facing: attrs.facing.unwrap_or("".to_string()),
                     days_limit: 30,
                     created_on,

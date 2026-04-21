@@ -1,5 +1,5 @@
 use crate::config::config;
-use crate::model::deal::{get_house_numbers, get_object_numbers, prepare_response};
+use crate::model::deal::{get_house_numbers, get_property_numbers, prepare_response};
 use crate::model::sync::sync;
 use log::info;
 use std::error::Error;
@@ -30,7 +30,7 @@ pub enum State {
     ChooseObjectNumber {
         project: String,
         object_type: String,
-        house: i32,
+        house: String,
     },
 }
 
@@ -68,7 +68,7 @@ pub fn bot_handler() -> Handler<'static, HandlerResult, DpHandlerDescription> {
                         object_type,
                         house,
                     }]
-                    .endpoint(receive_object_number),
+                    .endpoint(receive_property_number),
                 ),
         )
 }
@@ -104,7 +104,7 @@ async fn make_house_kbd(project: &str, object_type: &str) -> Option<KeyboardMark
     for label in labels.chunks(8) {
         let row = label
             .iter()
-            .map(|&item| KeyboardButton::new(item.to_string()))
+            .map(|item| KeyboardButton::new(item.to_string()))
             .collect();
 
         keyboard.push(row);
@@ -233,11 +233,12 @@ async fn receive_house_number(
     (project, object_type): (String, String), // Available from `State::ChooseObject`.
     msg: Message,
 ) -> HandlerResult {
-    match msg.text().map(|text| text.parse::<i32>()) {
-        Some(Ok(house)) => {
+    match msg.text() {
+        Some(house) => {
             let houses = get_house_numbers(&project, &object_type).await;
-            if houses.contains(&house) {
-                let numbers = get_object_numbers(&project, &object_type, house).await;
+            info!("[receive_house_number] {:?}", houses);
+            if houses.contains(&house.to_string()) {
+                let numbers = get_property_numbers(&project, &object_type, house).await;
                 if numbers.is_empty() {
                     bot.send_message(msg.chat.id, "Объектов не найдено".to_string())
                         .reply_markup(ReplyMarkup::KeyboardRemove(KeyboardRemove::new()))
@@ -261,7 +262,7 @@ async fn receive_house_number(
                             .update(State::ChooseObjectNumber {
                                 project,
                                 object_type,
-                                house,
+                                house: house.into(),
                             })
                             .await?;
                     } else {
@@ -288,10 +289,10 @@ async fn receive_house_number(
     Ok(())
 }
 
-async fn receive_object_number(
+async fn receive_property_number(
     bot: Bot,
     dialogue: MyDialogue,
-    (project, object_type, house): (String, String, i32), // Available from `State::ChooseHouseNumber`.
+    (project, property_type, house): (String, String, String), // Available from `State::ChooseHouseNumber`.
     msg: Message,
 ) -> HandlerResult {
     if let Some(text) = msg.text() {
@@ -303,9 +304,9 @@ async fn receive_object_number(
         };
         match payload.parse::<i32>() {
             Ok(number) => {
-                let objects = get_object_numbers(&project, &object_type, house).await;
+                let objects = get_property_numbers(&project, &property_type, &house).await;
                 if objects.contains(&number) {
-                    let report = prepare_response(&project, &object_type, house, number).await;
+                    let report = prepare_response(&project, &property_type, &house, number).await;
                     bot.send_message(msg.chat.id, report).await?;
                     if objects.len() == 1 {
                         bot.send_message(msg.chat.id, "Чтобы начать сначала,\n нажмите /start")

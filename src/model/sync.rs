@@ -111,8 +111,8 @@ async fn mark_as_transferred(remain_ids_limits: Vec<(u64, i32, bool)>, bot: &Bot
                         "Проект: {}, Дом №{}, к.{} ({}) передан!",
                         r.project,
                         r.house,
-                        r.object,
-                        get_ru_object_type(&r.object_type)
+                        r.property_num,
+                        get_ru_object_type(&r.property_type)
                     );
                     send_msg_to_group(bot, &msg).await;
                 }
