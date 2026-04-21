@@ -6,6 +6,7 @@ use sqlx::FromRow;
 use sqlx::types::chrono::NaiveDateTime;
 use std::ops::Add;
 use std::time::Duration;
+use crate::adapters::amo::amo_types::Deal;
 
 #[allow(dead_code)]
 #[derive(FromRow, Clone)]
@@ -83,7 +84,7 @@ impl Db {
         Ok(res)
     }
 
-    pub async fn create_deal(&self, d: &DealForAdd) -> Result<()> {
+    pub async fn create_deal(&self, d: &Deal) -> Result<()> {
         debug!("create deal with data: {:?}", &d);
         let (id, ): (i64,) = sqlx::query_as(
             r#"

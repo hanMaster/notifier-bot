@@ -1,11 +1,11 @@
-use chrono::{DateTime, Local, NaiveDateTime, TimeZone, Utc};
-use log::info;
 use crate::adapters::amo::AmoClient;
 use crate::adapters::amo::amo_types::FlexibleType::Str;
 use crate::adapters::amo::amo_types::{CustomField, Deal, Leads, Val};
 use crate::adapters::profit::ProfitbaseClient;
 use crate::bot_interface::PROJECTS;
 use crate::config::config;
+use chrono::{DateTime, Local, NaiveDateTime, TimeZone, Utc};
+use log::info;
 
 pub struct AmoCityClient {
     account_id: &'static str,
@@ -50,7 +50,7 @@ impl AmoClient for AmoCityClient {
                 info!("================================");
 
                 let days = l.val_to_num("Период передачи (дней)");
-                info!("ID: {}, days: {}", l.id ,days);
+                info!("ID: {}, days: {}", l.id, days);
 
                 let raw_project = l.val_to_str("ЖК");
                 let project = if raw_project == PROJECTS[0] {
@@ -64,23 +64,31 @@ impl AmoClient for AmoCityClient {
                 info!("Дом: {}", house);
 
                 let sold_at = l.val_to_str("Дата продажи для отчета");
-                if sold_at.len() > 0 {
-                    let ts = sold_at.parse::<i64>().unwrap_or(0);
-                    let date = ts_to_date(ts);
-                    info!("Sold date: {}", date.format("%d.%m.%Y"));
-                }
+                let ts = sold_at.parse::<i64>().unwrap_or(0);
+                let created_on = ts_to_date(ts);
+                info!("Sold date: {}", created_on.format("%d.%m.%Y"));
 
                 let facing = l.val_to_str("Вид отделки квартиры");
                 info!("Отделка: {}", facing);
 
-                let object_type = l.val_to_str("Тип помещения");
-                info!("Тип помещения: {}", object_type);
+                let property_type = l.val_to_str("Тип помещения");
+                info!("Тип помещения: {}", property_type);
 
-                let object_number = l.val_to_str("Номер помещения");
-                info!("Номер помещения: {}", object_number);
+                let property_num = l.val_to_str("Номер помещения");
+                info!("Номер помещения: {}", property_num);
                 info!("================================");
 
-                self.deal_with_days_limit(l.id, days, project)
+                let days_limit = self.deal_days_limit(days, &project);
+                Deal {
+                    deal_id: l.id,
+                    project,
+                    house,
+                    property_type,
+                    property_num: property_num.parse::<i32>().unwrap_or(0),
+                    facing,
+                    days_limit,
+                    created_on
+                }
             })
             .collect::<Vec<_>>()
     }

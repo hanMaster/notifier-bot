@@ -1,6 +1,5 @@
 use crate::Result;
 use crate::adapters::mailer::data_types::{DealInfo, DkpStat, StatNumbers};
-use crate::adapters::profit::DealForAdd;
 use crate::config::config;
 use crate::xlsx::Xlsx;
 use askama::Template;
@@ -8,6 +7,7 @@ use data_types::DkpObjects;
 use log::info;
 use mail_send::SmtpClientBuilder;
 use mail_send::mail_builder::MessageBuilder;
+use crate::adapters::amo::amo_types::Deal;
 
 pub mod data_types;
 
@@ -36,7 +36,7 @@ impl Email {
         rec
     }
 
-    pub async fn new_objects_notification(&self, deals: &[DealForAdd]) -> Result<()> {
+    pub async fn new_objects_notification(&self, deals: &[Deal]) -> Result<()> {
         let subject = "Новые сделки по ДКП";
         let content: Vec<DealInfo> = deals.iter().map(Into::into).collect();
         let today = chrono::Local::now().format("%d.%m.%Y %H:%M");

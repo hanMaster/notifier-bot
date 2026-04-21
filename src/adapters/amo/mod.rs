@@ -5,7 +5,7 @@ use crate::bot_interface::PROJECTS;
 use log::info;
 use reqwest::{Client, StatusCode};
 
-mod amo_types;
+pub mod amo_types;
 mod error;
 
 pub mod city_impl;
@@ -68,14 +68,8 @@ pub trait AmoClient {
     fn pipeline_id(&self) -> i64;
     fn token(&self) -> &str;
 
-    fn deal_with_days_limit(&self, deal_id: u64, days: i32, project: String) -> Deal {
+    fn deal_days_limit(&self, days: i32, project: &str) -> i32 {
         let default_days_limit = if project == PROJECTS[0] { 60 } else { 30 };
-        let days_limit = if days > 0 { days } else { default_days_limit };
-
-        Deal {
-            deal_id,
-            days_limit,
-            project,
-        }
+        if days > 0 { days } else { default_days_limit }
     }
 }

@@ -1,9 +1,9 @@
-use crate::adapters::profit::DealForAdd;
 use crate::model::deal::{DealData, get_ru_object_type};
 use askama::Template;
 use chrono::NaiveDateTime;
 use std::ops::Add;
 use std::time::Duration;
+use crate::adapters::amo::amo_types::Deal;
 
 #[derive(Debug, Clone)]
 pub struct DealInfo {
@@ -43,8 +43,8 @@ impl DealInfo {
     }
 }
 
-impl From<&DealForAdd> for DealInfo {
-    fn from(d: &DealForAdd) -> Self {
+impl From<&Deal> for DealInfo {
+    fn from(d: &Deal) -> Self {
         DealInfo::from_deal(
             &d.created_on,
             d.days_limit as u64,

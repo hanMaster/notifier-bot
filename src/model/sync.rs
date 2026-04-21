@@ -7,18 +7,18 @@ use crate::adapters::amo::city_impl::AmoCityClient;
 use crate::adapters::mailer::Email;
 use crate::adapters::profit::DealForAdd;
 use crate::config::config;
-use crate::error::Error::AppErr;
 use crate::model::deal::get_ru_object_type;
 use crate::sender::send_msg_to_group;
 use teloxide::Bot;
+use crate::adapters::amo::amo_types::Deal;
 
-pub async fn sync(bot: &Bot) -> Result<Vec<DealForAdd>> {
+pub async fn sync(bot: &Bot) -> Result<Vec<Deal>> {
     let results = sync_project(bot).await?;
     notify_by_email(&results).await?;
     Ok(results)
 }
 
-async fn notify_by_email(data: &[DealForAdd]) -> Result<()> {
+async fn notify_by_email(data: &[Deal]) -> Result<()> {
     if !data.is_empty() {
         let email = Email::new();
         email.new_objects_notification(data).await?;
@@ -26,7 +26,7 @@ async fn notify_by_email(data: &[DealForAdd]) -> Result<()> {
     Ok(())
 }
 
-async fn sync_project(bot: &Bot) -> Result<Vec<DealForAdd>> {
+async fn sync_project(bot: &Bot) -> Result<Vec<Deal>> {
     let db = Db::new().await;
     let mut saved_ids_limits = db.read_deal_ids().await?;
     debug!("saved ids: {:?}", saved_ids_limits);
@@ -39,7 +39,7 @@ async fn sync_project(bot: &Bot) -> Result<Vec<DealForAdd>> {
 async fn sync_funnel(
     db: &Db,
     saved_ids_limits: &mut Vec<(u64, i32, bool)>,
-) -> Result<Vec<DealForAdd>> {
+) -> Result<Vec<Deal>> {
     let funnel_id = config().FUNNEL;
     info!("Syncing funnel {}", funnel_id);
     let amo_client = AmoCityClient::new();
@@ -50,7 +50,7 @@ async fn sync_funnel(
         leads.iter().map(|l| l.deal_id).collect::<Vec<_>>()
     );
 
-    let mut new_data: Vec<DealForAdd> = vec![];
+    let mut new_data: Vec<Deal> = vec![];
 
     if !leads.is_empty() {
         for lead in leads {
@@ -76,21 +76,21 @@ async fn sync_funnel(
                 continue;
             }
 
-            let token = amo_client
-                .profitbase_client()
-                .get_profit_token()
-                .await
-                .map_err(|e| AppErr(format!("Failed to get profit token {:?}", e)))?;
-
-            let mut profit_data = amo_client
-                .profitbase_client()
-                .get_profit_data(lead.deal_id, lead.project, &token)
-                .await
-                .map_err(|e| AppErr(format!("Failed to get profit data {:?}", e)))?;
-
-            profit_data.days_limit = lead.days_limit;
-            db.create_deal(&profit_data).await?;
-            new_data.push(profit_data);
+            // let token = amo_client
+            //     .profitbase_client()
+            //     .get_profit_token()
+            //     .await
+            //     .map_err(|e| AppErr(format!("Failed to get profit token {:?}", e)))?;
+            //
+            // let mut profit_data = amo_client
+            //     .profitbase_client()
+            //     .get_profit_data(lead.deal_id, lead.project, &token)
+            //     .await
+            //     .map_err(|e| AppErr(format!("Failed to get profit data {:?}", e)))?;
+            //
+            // profit_data.days_limit = lead.days_limit;
+            db.create_deal(&lead).await?;
+            new_data.push(lead);
         }
     }
 
