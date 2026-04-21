@@ -160,23 +160,18 @@ async fn start(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerResult {
 
 async fn receive_project_name(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerResult {
     match msg.text() {
-        Some(text) => {
-            if PROJECTS.contains(&text) {
-                let keyboard = make_kbd(2);
-                bot.send_message(msg.chat.id, "Квартиры или кладовки?")
-                    .reply_markup(keyboard)
-                    .await?;
-                dialogue
-                    .update(State::ChooseObjectType {
-                        project: text.into(),
-                    })
-                    .await?;
-            } else {
-                bot.send_message(msg.chat.id, "Сделайте выбор кнопками")
-                    .await?;
-            }
+        Some(text) if PROJECTS.contains(&text) => {
+            let keyboard = make_kbd(2);
+            bot.send_message(msg.chat.id, "Квартиры или кладовки?")
+                .reply_markup(keyboard)
+                .await?;
+            dialogue
+                .update(State::ChooseObjectType {
+                    project: text.into(),
+                })
+                .await?;
         }
-        None => {
+        _ => {
             bot.send_message(msg.chat.id, "Сделайте выбор кнопками")
                 .await?;
         }
@@ -192,32 +187,28 @@ async fn receive_object_type(
     msg: Message,
 ) -> HandlerResult {
     match msg.text() {
-        Some(property_type) => {
-            if PROPERTY_TYPES.contains(&property_type) {
-                let keyboard_option = make_house_kbd(&project, property_type).await;
-                match keyboard_option {
-                    Some(keyboard) => {
-                        bot.send_message(msg.chat.id, "Выберите номер дома")
-                            .reply_markup(keyboard)
-                            .await?;
-                        dialogue
-                            .update(State::ChooseHouseNumber {
-                                project,
-                                object_type: property_type.into(),
-                            })
-                            .await?;
-                    }
-                    None => {
-                        bot.send_message(msg.chat.id, "Объектов не обнаружено")
-                            .reply_markup(ReplyMarkup::KeyboardRemove(KeyboardRemove::new()))
-                            .await?;
-                    }
+        Some(property_type) if PROPERTY_TYPES.contains(&property_type) => {
+            let keyboard_option = make_house_kbd(&project, property_type).await;
+            match keyboard_option {
+                Some(keyboard) => {
+                    bot.send_message(msg.chat.id, "Выберите номер дома")
+                        .reply_markup(keyboard)
+                        .await?;
+                    dialogue
+                        .update(State::ChooseHouseNumber {
+                            project,
+                            object_type: property_type.into(),
+                        })
+                        .await?;
                 }
-            } else {
-                bot.send_message(msg.chat.id, "Сделайте выбор кнопками")
-                    .await?;
+                None => {
+                    bot.send_message(msg.chat.id, "Объектов не обнаружено")
+                        .reply_markup(ReplyMarkup::KeyboardRemove(KeyboardRemove::new()))
+                        .await?;
+                }
             }
         }
+
         _ => {
             bot.send_message(msg.chat.id, "Сделайте выбор кнопками")
                 .await?;

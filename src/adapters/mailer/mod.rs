@@ -126,7 +126,7 @@ mod test {
         let email = Email::new();
         let payload = "<div>Hello World</div>".to_owned();
         let subject = "Тестовое сообщение от бота";
-        let send_result = email.send(&subject, payload, None).await;
+        let send_result = email.send(subject, payload, None).await;
 
         match send_result {
             Ok(_) => {
