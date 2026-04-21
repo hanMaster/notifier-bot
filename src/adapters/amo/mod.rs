@@ -4,7 +4,7 @@ pub(crate) use crate::adapters::amo::error::{Error, Result};
 use crate::bot_interface::PROJECTS;
 use crate::config::config;
 use chrono::{DateTime, Local, NaiveDateTime, TimeZone, Utc};
-use log::info;
+use log::{debug, info};
 use reqwest::{Client, StatusCode};
 
 pub mod amo_types;
@@ -91,10 +91,10 @@ impl AmoClient {
                 })
             })
             .map(|l| {
-                info!("================================");
+                debug!("================================");
 
                 let days = l.val_to_num("Период передачи (дней)");
-                info!("ID: {}, days: {}", l.id, days);
+                debug!("ID: {}, days: {}", l.id, days);
 
                 let raw_project = l.val_to_str("ЖК");
                 let project = if raw_project == PROJECTS[0] {
@@ -102,25 +102,25 @@ impl AmoClient {
                 } else {
                     PROJECTS[1].to_string()
                 };
-                info!("Project: {}", project);
+                debug!("Project: {}", project);
 
                 let house = l.val_to_str("Дом");
-                info!("Дом: {}", house);
+                debug!("Дом: {}", house);
 
                 let sold_at = l.val_to_str("Дата продажи для отчета");
                 let ts = sold_at.parse::<i64>().unwrap_or(0);
                 let created_on = ts_to_date(ts);
-                info!("Sold date: {}", created_on.format("%d.%m.%Y"));
+                debug!("Sold date: {}", created_on.format("%d.%m.%Y"));
 
                 let facing = l.val_to_str("Вид отделки квартиры");
-                info!("Отделка: {}", facing);
+                debug!("Отделка: {}", facing);
 
                 let property_type = l.val_to_str("Тип помещения");
-                info!("Тип помещения: {}", property_type);
+                debug!("Тип помещения: {}", property_type);
 
                 let property_num = l.val_to_str("Номер помещения");
-                info!("Номер помещения: {}", property_num);
-                info!("================================");
+                debug!("Номер помещения: {}", property_num);
+                debug!("================================");
 
                 let days_limit = self.deal_days_limit(days, &project);
                 Deal {

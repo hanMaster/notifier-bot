@@ -46,6 +46,7 @@ impl Db {
         project: &str,
         property_type: &str,
     ) -> Result<Vec<String>> {
+        debug!("[list_house_numbers] Project {}, property_type {}", project, property_type);
         let records: Vec<HouseNumbers> = sqlx::query_as(
             r#"SELECT DISTINCT house
                     FROM deal
@@ -188,7 +189,7 @@ impl Db {
     async fn get_deal(
         &self,
         project: &str,
-        object_type: &str,
+        property_type: &str,
         house: &str,
         number: i32,
     ) -> Result<DealData> {
@@ -201,7 +202,7 @@ impl Db {
                        AND property_num = $4 "#,
         )
         .bind(project)
-        .bind(object_type)
+        .bind(property_type)
         .bind(house)
         .bind(number)
         .fetch_one(&self.db)

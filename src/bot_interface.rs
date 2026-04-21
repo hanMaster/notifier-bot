@@ -14,7 +14,7 @@ type HandlerResult = Result<(), Box<dyn Error + Send + Sync>>;
 type MyDialogue = Dialogue<State, InMemStorage<State>>;
 
 pub const PROJECTS: [&str; 2] = ["DNS Сити", "ЖК Формат"];
-const PROPERTY_TYPES: [&str; 3] = ["Квартиры", "Кладовки", "Машиноместа"];
+const PROPERTY_TYPES: [&str; 3] = ["Квартира", "Кладовка", "Машиноместо"];
 #[derive(Clone, Default)]
 pub enum State {
     #[default]
@@ -25,11 +25,11 @@ pub enum State {
     },
     ChooseHouseNumber {
         project: String,
-        object_type: String,
+        property_type: String,
     },
     ChooseObjectNumber {
         project: String,
-        object_type: String,
+        property_type: String,
         house: String,
     },
 }
@@ -54,18 +54,18 @@ pub fn bot_handler() -> Handler<'static, HandlerResult, DpHandlerDescription> {
         .branch(
             Update::filter_message()
                 .branch(case![State::ChooseProject].endpoint(receive_project_name))
-                .branch(case![State::ChooseObjectType { project }].endpoint(receive_object_type))
+                .branch(case![State::ChooseObjectType { project }].endpoint(receive_property_type))
                 .branch(
                     case![State::ChooseHouseNumber {
                         project,
-                        object_type
+                        property_type
                     }]
                     .endpoint(receive_house_number),
                 )
                 .branch(
                     case![State::ChooseObjectNumber {
                         project,
-                        object_type,
+                        property_type,
                         house,
                     }]
                     .endpoint(receive_property_number),
@@ -94,10 +94,10 @@ fn make_kbd(step: i32) -> KeyboardMarkup {
     KeyboardMarkup::new(keyboard).resize_keyboard()
 }
 
-async fn make_house_kbd(project: &str, object_type: &str) -> Option<KeyboardMarkup> {
+async fn make_house_kbd(project: &str, property_type: &str) -> Option<KeyboardMarkup> {
     let mut keyboard: Vec<Vec<KeyboardButton>> = vec![];
 
-    let labels = get_house_numbers(project, object_type).await;
+    let labels = get_house_numbers(project, property_type).await;
 
     info!("LABELS {:?}", labels);
 
@@ -180,7 +180,7 @@ async fn receive_project_name(bot: Bot, dialogue: MyDialogue, msg: Message) -> H
     Ok(())
 }
 
-async fn receive_object_type(
+async fn receive_property_type(
     bot: Bot,
     dialogue: MyDialogue,
     project: String, // Available from `State::ChooseProject`.
@@ -197,7 +197,7 @@ async fn receive_object_type(
                     dialogue
                         .update(State::ChooseHouseNumber {
                             project,
-                            object_type: property_type.into(),
+                            property_type: property_type.into(),
                         })
                         .await?;
                 }
@@ -221,15 +221,15 @@ async fn receive_object_type(
 async fn receive_house_number(
     bot: Bot,
     dialogue: MyDialogue,
-    (project, object_type): (String, String), // Available from `State::ChooseObject`.
+    (project, property_type): (String, String), // Available from `State::ChooseObject`.
     msg: Message,
 ) -> HandlerResult {
     match msg.text() {
         Some(house) => {
-            let houses = get_house_numbers(&project, &object_type).await;
+            let houses = get_house_numbers(&project, &property_type).await;
             info!("[receive_house_number] {:?}", houses);
             if houses.contains(&house.to_string()) {
-                let numbers = get_property_numbers(&project, &object_type, house).await;
+                let numbers = get_property_numbers(&project, &property_type, house).await;
                 if numbers.is_empty() {
                     bot.send_message(msg.chat.id, "Объектов не найдено".to_string())
                         .reply_markup(ReplyMarkup::KeyboardRemove(KeyboardRemove::new()))
@@ -252,13 +252,13 @@ async fn receive_house_number(
                         dialogue
                             .update(State::ChooseObjectNumber {
                                 project,
-                                object_type,
+                                property_type,
                                 house: house.into(),
                             })
                             .await?;
                     } else {
                         let number = *numbers.first().unwrap();
-                        let report = prepare_response(&project, &object_type, house, number).await;
+                        let report = prepare_response(&project, &property_type, house, number).await;
                         bot.send_message(msg.chat.id, report).await?;
                         bot.send_message(msg.chat.id, "Чтобы начать сначала,\n нажмите /start")
                             .reply_markup(ReplyMarkup::KeyboardRemove(KeyboardRemove::new()))
