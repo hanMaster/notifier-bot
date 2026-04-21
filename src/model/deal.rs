@@ -1,11 +1,11 @@
 use crate::Result;
+use crate::adapters::amo::amo_types::Deal;
 use crate::model::Db;
 use log::{debug, error, info};
 use sqlx::FromRow;
 use sqlx::types::chrono::NaiveDateTime;
 use std::ops::Add;
 use std::time::Duration;
-use crate::adapters::amo::amo_types::Deal;
 
 #[allow(dead_code)]
 #[derive(FromRow, Clone)]
@@ -41,7 +41,11 @@ impl Db {
         Ok(records)
     }
 
-    pub async fn list_house_numbers(&self, project: &str, property_type: &str) -> Result<Vec<String>> {
+    pub async fn list_house_numbers(
+        &self,
+        project: &str,
+        property_type: &str,
+    ) -> Result<Vec<String>> {
         let records: Vec<HouseNumbers> = sqlx::query_as(
             r#"SELECT DISTINCT house
                     FROM deal
@@ -208,8 +212,7 @@ impl Db {
 
 pub async fn get_house_numbers(project: &str, property_type: &str) -> Vec<String> {
     let db = Db::new().await;
-    let profit_type = get_en_object_type(property_type);
-    let res = db.list_house_numbers(project, profit_type).await;
+    let res = db.list_house_numbers(project, property_type).await;
     res.unwrap_or_else(|e| {
         error!("[get_house_numbers] {:?}", e);
         vec![]
@@ -218,36 +221,21 @@ pub async fn get_house_numbers(project: &str, property_type: &str) -> Vec<String
 
 pub async fn get_property_numbers(project: &str, property_type: &str, house: &str) -> Vec<i32> {
     let db = Db::new().await;
-    let profit_type = get_en_object_type(property_type);
-    let res = db.list_numbers(project, profit_type, house).await;
+    let res = db.list_numbers(project, property_type, house).await;
     res.unwrap_or_else(|e| {
         error!("[get_object_numbers] {:?}", e);
         vec![]
     })
 }
 
-pub fn get_ru_object_type(profitbase_type: &str) -> &'static str {
-    match profitbase_type {
-        "property" => "Квартира",
-        "pantry" => "Кладовка",
-        "parking" => "Машиноместо",
-        _ => "",
-    }
-}
-
-pub fn get_en_object_type(property_type: &str) -> &'static str {
-    match property_type {
-        "Квартиры" => "property",
-        "Кладовки" => "pantry",
-        "Машиноместа" => "parking",
-        _ => "",
-    }
-}
-
-pub async fn prepare_response(project: &str, object_type: &str, house: &str, number: i32) -> String {
+pub async fn prepare_response(
+    project: &str,
+    property_type: &str,
+    house: &str,
+    number: i32,
+) -> String {
     let db = Db::new().await;
-    let profit_type = get_en_object_type(object_type);
-    let result = db.get_deal(project, profit_type, house, number).await;
+    let result = db.get_deal(project, property_type, house, number).await;
 
     match result {
         Ok(b) => {
@@ -262,7 +250,7 @@ pub async fn prepare_response(project: &str, object_type: &str, house: &str, num
                 b.deal_id,
                 b.project,
                 b.house,
-                get_ru_object_type(b.property_type.as_str()),
+                b.property_type,
                 b.property_num,
                 facing,
                 b.created_on.format("%d.%m.%Y"),

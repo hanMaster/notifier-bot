@@ -1,4 +1,5 @@
 use crate::Result;
+use crate::adapters::amo::amo_types::Deal;
 use crate::adapters::mailer::data_types::{DealInfo, DkpStat, StatNumbers};
 use crate::config::config;
 use crate::xlsx::Xlsx;
@@ -7,7 +8,6 @@ use data_types::DkpObjects;
 use log::info;
 use mail_send::SmtpClientBuilder;
 use mail_send::mail_builder::MessageBuilder;
-use crate::adapters::amo::amo_types::Deal;
 
 pub mod data_types;
 

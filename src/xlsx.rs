@@ -38,7 +38,12 @@ impl Xlsx {
         for (idx, deal) in deals.iter().enumerate() {
             worksheet.write_with_format((idx + 1) as RowNum, 0, &deal.project, &row_format)?;
             worksheet.write_with_format((idx + 1) as RowNum, 1, &deal.house, &row_format)?;
-            worksheet.write_with_format((idx + 1) as RowNum, 2, &deal.property_type, &row_format)?;
+            worksheet.write_with_format(
+                (idx + 1) as RowNum,
+                2,
+                &deal.property_type,
+                &row_format,
+            )?;
             worksheet.write_with_format((idx + 1) as RowNum, 3, deal.property_num, &row_format)?;
             worksheet.write_with_format((idx + 1) as RowNum, 4, &deal.facing, &row_format)?;
             worksheet.write_with_format((idx + 1) as RowNum, 5, &deal.reg_date, &row_format)?;

@@ -1,9 +1,9 @@
-use crate::model::deal::{DealData, get_ru_object_type};
+use crate::adapters::amo::amo_types::Deal;
+use crate::model::deal::DealData;
 use askama::Template;
 use chrono::NaiveDateTime;
 use std::ops::Add;
 use std::time::Duration;
-use crate::adapters::amo::amo_types::Deal;
 
 #[derive(Debug, Clone)]
 pub struct DealInfo {
@@ -34,7 +34,7 @@ impl DealInfo {
         Self {
             project: project.to_string(),
             house: house.to_string(),
-            property_type: get_ru_object_type(property_type).to_string(),
+            property_type: property_type.to_string(),
             property_num,
             facing: facing.to_string(),
             reg_date,

@@ -1,9 +1,8 @@
+use chrono::NaiveDateTime;
+use serde::Deserialize;
 use std::fmt::{Display, Formatter};
 use std::ops::Add;
 use std::time::Duration;
-use chrono::NaiveDateTime;
-use serde::Deserialize;
-use crate::model::deal::get_ru_object_type;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct Leads {
@@ -121,7 +120,7 @@ impl Display for Deal {
             self.deal_id,
             self.project,
             self.house,
-            get_ru_object_type(self.property_type.as_str()),
+            self.property_type,
             self.property_num,
             facing,
             self.created_on.format("%d.%m.%Y"),

@@ -3,10 +3,10 @@ pub use crate::error::Result;
 use crate::model::init_db;
 use dotenvy::dotenv;
 use log::info;
+use rustls::crypto::{CryptoProvider, ring};
 use teloxide::dispatching::dialogue::InMemStorage;
 use teloxide::dptree::deps;
 use teloxide::{prelude::*, utils::command::BotCommands};
-use rustls::crypto::{CryptoProvider, ring};
 
 mod adapters;
 mod bot_interface;
@@ -23,9 +23,8 @@ async fn main() -> Result<()> {
     dotenv().expect("dotenv init failed");
 
     pretty_env_logger::init();
-    
-    CryptoProvider::install_default(ring::default_provider())
-           .expect("install crypto provider");
+
+    CryptoProvider::install_default(ring::default_provider()).expect("install crypto provider");
 
     init_db().await?;
 

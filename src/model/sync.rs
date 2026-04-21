@@ -6,7 +6,6 @@ use log::{debug, error, info};
 use crate::adapters::amo::amo_types::Deal;
 use crate::adapters::mailer::Email;
 use crate::config::config;
-use crate::model::deal::get_ru_object_type;
 use crate::sender::send_msg_to_group;
 use teloxide::Bot;
 
@@ -91,10 +90,7 @@ async fn mark_as_transferred(remain_ids_limits: Vec<(u64, i32, bool)>, bot: &Bot
                 for r in rows {
                     let msg = format!(
                         "Проект: {}, Дом №{}, к.{} ({}) передан!",
-                        r.project,
-                        r.house,
-                        r.property_num,
-                        get_ru_object_type(&r.property_type)
+                        r.project, r.house, r.property_num, r.property_type
                     );
                     send_msg_to_group(bot, &msg).await;
                 }
