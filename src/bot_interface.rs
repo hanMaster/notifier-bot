@@ -14,7 +14,7 @@ type HandlerResult = Result<(), Box<dyn Error + Send + Sync>>;
 type MyDialogue = Dialogue<State, InMemStorage<State>>;
 
 pub const PROJECTS: [&str; 2] = ["DNS Сити", "ЖК Формат"];
-const OBJECT_TYPES: [&str; 3] = ["Квартиры", "Кладовки", "Машиноместа"];
+const PROPERTY_TYPES: [&str; 3] = ["Квартиры", "Кладовки", "Машиноместа"];
 #[derive(Clone, Default)]
 pub enum State {
     #[default]
@@ -79,7 +79,7 @@ fn make_kbd(step: i32) -> KeyboardMarkup {
     let labels: Vec<&str> = if step == 1 {
         PROJECTS.to_vec()
     } else {
-        OBJECT_TYPES.to_vec()
+        PROPERTY_TYPES.to_vec()
     };
 
     for label in labels.chunks(2) {
@@ -192,9 +192,9 @@ async fn receive_object_type(
     msg: Message,
 ) -> HandlerResult {
     match msg.text() {
-        Some(object_type) => {
-            if OBJECT_TYPES.contains(&object_type) {
-                let keyboard_option = make_house_kbd(&project, object_type).await;
+        Some(property_type) => {
+            if PROPERTY_TYPES.contains(&property_type) {
+                let keyboard_option = make_house_kbd(&project, property_type).await;
                 match keyboard_option {
                     Some(keyboard) => {
                         bot.send_message(msg.chat.id, "Выберите номер дома")
@@ -203,7 +203,7 @@ async fn receive_object_type(
                         dialogue
                             .update(State::ChooseHouseNumber {
                                 project,
-                                object_type: object_type.into(),
+                                object_type: property_type.into(),
                             })
                             .await?;
                     }

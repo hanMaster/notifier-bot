@@ -1,4 +1,4 @@
-use crate::adapters::{amo, profit};
+use crate::adapters::amo;
 use std::fmt::{Display, Formatter};
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -11,7 +11,6 @@ pub enum Error {
 
     Sqlx(sqlx::Error),
     AmoCRM(amo::Error),
-    Profitbase(profit::Error),
     Request(teloxide::RequestError),
     // -- Mailer
     Mailer(mail_send::Error),
@@ -53,12 +52,6 @@ impl From<mail_send::Error> for Error {
 impl From<amo::Error> for Error {
     fn from(e: amo::Error) -> Error {
         Error::AmoCRM(e)
-    }
-}
-
-impl From<profit::Error> for Error {
-    fn from(e: profit::Error) -> Error {
-        Error::Profitbase(e)
     }
 }
 

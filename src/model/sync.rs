@@ -1,16 +1,14 @@
+use crate::Result;
 use crate::adapters::amo::AmoClient;
 use crate::model::Db;
-use crate::Result;
 use log::{debug, error, info};
 
-use crate::adapters::amo::city_impl::AmoCityClient;
+use crate::adapters::amo::amo_types::Deal;
 use crate::adapters::mailer::Email;
-use crate::adapters::profit::DealForAdd;
 use crate::config::config;
 use crate::model::deal::get_ru_object_type;
 use crate::sender::send_msg_to_group;
 use teloxide::Bot;
-use crate::adapters::amo::amo_types::Deal;
 
 pub async fn sync(bot: &Bot) -> Result<Vec<Deal>> {
     let results = sync_project(bot).await?;
@@ -36,13 +34,10 @@ async fn sync_project(bot: &Bot) -> Result<Vec<Deal>> {
     Ok(res)
 }
 
-async fn sync_funnel(
-    db: &Db,
-    saved_ids_limits: &mut Vec<(u64, i32, bool)>,
-) -> Result<Vec<Deal>> {
+async fn sync_funnel(db: &Db, saved_ids_limits: &mut Vec<(u64, i32, bool)>) -> Result<Vec<Deal>> {
     let funnel_id = config().FUNNEL;
     info!("Syncing funnel {}", funnel_id);
-    let amo_client = AmoCityClient::new();
+    let amo_client = AmoClient::new();
     let leads = amo_client.get_funnel_leads(funnel_id).await?;
 
     info!(
@@ -76,19 +71,6 @@ async fn sync_funnel(
                 continue;
             }
 
-            // let token = amo_client
-            //     .profitbase_client()
-            //     .get_profit_token()
-            //     .await
-            //     .map_err(|e| AppErr(format!("Failed to get profit token {:?}", e)))?;
-            //
-            // let mut profit_data = amo_client
-            //     .profitbase_client()
-            //     .get_profit_data(lead.deal_id, lead.project, &token)
-            //     .await
-            //     .map_err(|e| AppErr(format!("Failed to get profit data {:?}", e)))?;
-            //
-            // profit_data.days_limit = lead.days_limit;
             db.create_deal(&lead).await?;
             new_data.push(lead);
         }

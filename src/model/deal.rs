@@ -1,5 +1,4 @@
 use crate::Result;
-use crate::adapters::profit::DealForAdd;
 use crate::model::Db;
 use log::{debug, error, info};
 use sqlx::FromRow;
