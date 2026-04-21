@@ -85,7 +85,7 @@ impl Email {
 
         let creds = mail_send::Credentials::new(&username, &secret);
 
-        let mut mailer = SmtpClientBuilder::new(&config().SMTP_SERVER, 587)
+        let mut mailer = SmtpClientBuilder::new(&config().SMTP_SERVER, 587)?
             .implicit_tls(false)
             .credentials(creds)
             .connect()

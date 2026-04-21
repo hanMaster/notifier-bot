@@ -14,6 +14,7 @@ pub enum Error {
     Request(teloxide::RequestError),
     // -- Mailer
     Mailer(mail_send::Error),
+    Smtp(String),
     // -- Askama
     Tmpl(askama::Error),
     // -- Chrono
@@ -46,6 +47,12 @@ impl From<askama::Error> for Error {
 impl From<mail_send::Error> for Error {
     fn from(e: mail_send::Error) -> Self {
         Error::Mailer(e)
+    }
+}
+
+impl From<String> for Error {
+    fn from(e: String) -> Self {
+        Error::Smtp(e)
     }
 }
 

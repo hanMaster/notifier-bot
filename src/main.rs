@@ -3,7 +3,6 @@ pub use crate::error::Result;
 use crate::model::init_db;
 use dotenvy::dotenv;
 use log::info;
-use rustls::crypto::{CryptoProvider, ring};
 use teloxide::dispatching::dialogue::InMemStorage;
 use teloxide::dptree::deps;
 use teloxide::{prelude::*, utils::command::BotCommands};
@@ -24,7 +23,9 @@ async fn main() -> Result<()> {
 
     pretty_env_logger::init();
 
-    CryptoProvider::install_default(ring::default_provider()).expect("install crypto provider");
+    rustls::crypto::ring::default_provider()
+        .install_default()
+        .expect("Failed to install rustls CryptoProvider");
 
     init_db().await?;
 
