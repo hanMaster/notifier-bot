@@ -14,8 +14,8 @@ reqwest = { version = "0.12", features = ["json", "socks"] }
 serde = { version = "1", features = ["derive"] }
 cron = "0.16"
 chrono = "0.4"
-askama = "0.15"
-rust_xlsxwriter = "0.94"
+askama = "0.16"
+rust_xlsxwriter = "0.95"
 rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
 sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "sqlite", "tls-rustls-ring", "sqlite", "chrono", "migrate", "derive"] }
 mail-send = { version = "0.6", default-features = false, features = ["ring", "builder"] }
