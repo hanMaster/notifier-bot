@@ -17,5 +17,5 @@ chrono = "0.4"
 askama = "0.16"
 rust_xlsxwriter = "0.95"
 rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
-sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "sqlite", "tls-rustls-ring", "sqlite", "chrono", "migrate", "derive"] }
+sqlx = { version = "0.9", default-features = false, features = ["runtime-tokio", "sqlite", "tls-rustls-ring", "sqlite", "chrono", "migrate", "derive"] }
 mail-send = { version = "0.6", default-features = false, features = ["ring", "builder"] }

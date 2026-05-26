@@ -129,11 +129,9 @@ impl Db {
             .collect::<Vec<_>>()
             .join(", ");
 
-        let query = format!(
-            "SELECT * FROM deal WHERE transfer_completed = true AND deal_id in ({ids_str})"
-        );
-
-        let done_objects: Vec<DealData> = sqlx::query_as(&query).fetch_all(&self.db).await?;
+        let done_objects: Vec<DealData> = sqlx::query_as("SELECT * FROM deal WHERE transfer_completed = true AND deal_id in ($1)")
+            .bind(ids_str)
+            .fetch_all(&self.db).await?;
 
         Ok(done_objects)
     }
