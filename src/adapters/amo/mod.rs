@@ -107,7 +107,7 @@ impl AmoClient {
                 let house = l.val_to_str("Дом");
                 debug!("Дом: {}", house);
 
-                let sold_at = l.val_to_str("Дата продажи для отчета");
+                let sold_at = l.val_to_str("Фактическая дата регистрации ДДУ");
                 let ts = sold_at.parse::<i64>().unwrap_or(0);
                 let created_on = ts_to_date(ts);
                 debug!("Sold date: {}", created_on.format("%d.%m.%Y"));
