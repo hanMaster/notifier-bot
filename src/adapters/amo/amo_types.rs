@@ -61,6 +61,9 @@ impl Lead {
         if sold_at.is_empty() {
             sold_at = self.val_to_str("Дата подписания договора");
         }
+        if sold_at.is_empty() {
+            sold_at = self.val_to_str("Дата продажи для отчета");
+        }
         sold_at
     }
 }
