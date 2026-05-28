@@ -55,6 +55,14 @@ impl Lead {
             Some(f) => f.values[0].value.clone().into(),
         }
     }
+
+    pub fn sold_at(&self) -> String {
+        let mut sold_at = self.val_to_str("Фактическая дата регистрации ДДУ");
+        if sold_at.is_empty() {
+            sold_at = self.val_to_str("Дата подписания договора");
+        }
+        sold_at
+    }
 }
 
 #[derive(Deserialize, Debug, Clone, PartialEq)]
